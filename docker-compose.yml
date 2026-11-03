@@ -42,6 +42,10 @@ services:
       STORAGE_ACCESS_KEY: ${STORAGE_ACCESS_KEY:-}
       STORAGE_SECRET_KEY: ${STORAGE_SECRET_KEY:-}
       APP_URL: ${APP_URL:-http://localhost:3000}
+      COOKIE_SEGURA: ${COOKIE_SEGURA:-false}
+      ARQUITECTO_NOMBRE: ${ARQUITECTO_NOMBRE:-Arquitecto Demo}
+      ARQUITECTO_EMAIL: ${ARQUITECTO_EMAIL:-arquitecto@gestionobra.local}
+      ARQUITECTO_CLAVE: ${ARQUITECTO_CLAVE:-obra-demo-local-2026}
     ports:
       - "8080:8080"
     volumes:

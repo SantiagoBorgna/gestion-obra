@@ -13,3 +13,12 @@ docker compose up --build
 ```
 
 Luego abrir http://localhost:3000.
+
+Con la base vacía se crea una cuenta de arquitecto para empezar:
+
+- Correo: `arquitecto@gestionobra.local`
+- Contraseña: `obra-demo-local-2026`
+
+Se pueden cambiar con las variables `ARQUITECTO_EMAIL` y `ARQUITECTO_CLAVE` (ver `.env.example`).
+
+Los correos que envía el sistema (invitaciones y recuperación de contraseña) se ven en Mailpit: http://localhost:8025.

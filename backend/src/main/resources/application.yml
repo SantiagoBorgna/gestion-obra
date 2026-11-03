@@ -1,5 +1,12 @@
 server:
   port: 8080
+  servlet:
+    session:
+      timeout: 8h
+      cookie:
+        http-only: true
+        same-site: strict
+        secure: ${COOKIE_SEGURA:false}
 
 spring:
   application:
@@ -35,6 +42,11 @@ spring:
 
 app:
   url: ${APP_URL:http://localhost:3000}
+  # Cuenta del arquitecto que se crea al arrancar con la base vacía
+  arquitecto:
+    nombre: ${ARQUITECTO_NOMBRE:Arquitecto Demo}
+    email: ${ARQUITECTO_EMAIL:arquitecto@gestionobra.local}
+    clave: ${ARQUITECTO_CLAVE:obra-demo-local-2026}
   mail:
     from: ${MAIL_FROM:no-responder@gestionobra.local}
   storage:

@@ -1,0 +1,17 @@
+package com.gestionobra.obra.entity;
+
+public enum Rubro {
+    MOVIMIENTO_DE_SUELOS,
+    FUNDACIONES,
+    ESTRUCTURAS,
+    MAMPOSTERIA,
+    TECHOS_Y_CUBIERTAS,
+    INSTALACION_SANITARIA,
+    INSTALACION_ELECTRICA,
+    INSTALACION_DE_GAS,
+    REVOQUES,
+    PISOS,
+    CARPINTERIA,
+    PINTURA,
+    TERMINACIONES
+}
