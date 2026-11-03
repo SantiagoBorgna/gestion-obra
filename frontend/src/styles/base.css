@@ -1,0 +1,54 @@
+/* Paleta y tipografía tomadas de los prototipos de interfaz */
+:root {
+  --beige-oscuro: #dbcbaa;
+  --beige-claro: #efe6d4;
+  --borde-beige: #c9b994;
+  --marron: #7a5c2e;
+  --marron-oscuro: #5b4523;
+  --texto: #2b2b2b;
+  --texto-secundario: #77726a;
+  --texto-suave: #9a9488;
+  --borde: #e4e1da;
+  --verde: #4e9a6e;
+  --ambar: #d9a040;
+  --rojo: #c4533a;
+  --blanco: #ffffff;
+  font-family: Arial, Helvetica, sans-serif;
+  color: var(--texto);
+}
+
+* { box-sizing: border-box; }
+body { margin: 0; background: var(--blanco); }
+h1, h2, h3 { margin: 0; }
+
+.tarjeta {
+  background: var(--blanco);
+  border: 1px solid var(--borde);
+  border-radius: 10px;
+  padding: 20px 18px;
+}
+
+.texto-secundario { color: var(--texto-secundario); }
+.texto-error { color: var(--rojo); }
+
+/* Pantallas de acceso (inicio de sesión, definición de contraseña) */
+.pantalla-acceso {
+  min-height: 100vh;
+  background: var(--beige-claro);
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  padding: 0 18px;
+}
+.pantalla-acceso .tarjeta { width: 100%; max-width: 360px; }
+.acceso-marca { text-align: center; margin-bottom: 20px; }
+.acceso-logo {
+  width: 44px; height: 44px; border-radius: 50%;
+  background: var(--beige-oscuro);
+  margin: 0 auto 10px;
+  display: flex; align-items: center; justify-content: center;
+}
+.acceso-marca h1 { font-size: 20px; }
+.tarjeta h2 { font-size: 16px; margin-bottom: 12px; }
+.lista-estado { margin: 0; padding-left: 18px; line-height: 1.8; }
