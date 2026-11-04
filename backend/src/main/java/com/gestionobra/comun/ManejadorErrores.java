@@ -10,6 +10,7 @@ import org.springframework.http.converter.HttpMessageNotReadableException;
 import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+import org.springframework.web.multipart.MaxUploadSizeExceededException;
 import org.springframework.web.servlet.resource.NoResourceFoundException;
 
 /** Convierte los errores en respuestas JSON con la forma {"mensaje": "..."}. */
@@ -27,9 +28,16 @@ public class ManejadorErrores {
     public ResponseEntity<Map<String, String>> datosInvalidos(MethodArgumentNotValidException e) {
         String mensaje = e.getBindingResult().getFieldErrors().stream()
             .findFirst()
+            // Un valor que no se pudo convertir (por ejemplo, una fecha mal escrita) trae un mensaje técnico.
+            .filter(error -> !error.isBindingFailure())
             .map(error -> error.getDefaultMessage())
             .orElse("Los datos ingresados no son válidos.");
         return respuesta(HttpStatus.BAD_REQUEST, mensaje);
+    }
+
+    @ExceptionHandler(MaxUploadSizeExceededException.class)
+    public ResponseEntity<Map<String, String>> archivoExcedido(MaxUploadSizeExceededException e) {
+        return respuesta(HttpStatus.BAD_REQUEST, "El archivo puede pesar como máximo 10 MB.");
     }
 
     @ExceptionHandler(HttpMessageNotReadableException.class)
