@@ -8,6 +8,7 @@ import NuevaObra from './pages/NuevaObra.jsx';
 import DetalleObra from './pages/DetalleObra.jsx';
 import Relevamiento from './pages/Relevamiento.jsx';
 import PresupuestoObra from './pages/PresupuestoObra.jsx';
+import CobrosYPagos from './pages/CobrosYPagos.jsx';
 import Estado from './pages/Estado.jsx';
 
 export default function App() {
@@ -23,6 +24,7 @@ export default function App() {
         <Route path="/obras/:idObra" element={<RutaPrivada><DetalleObra /></RutaPrivada>} />
         <Route path="/obras/:idObra/relevamiento" element={<RutaPrivada><Relevamiento /></RutaPrivada>} />
         <Route path="/obras/:idObra/presupuesto" element={<RutaPrivada><PresupuestoObra /></RutaPrivada>} />
+        <Route path="/obras/:idObra/pagos" element={<RutaPrivada><CobrosYPagos /></RutaPrivada>} />
         <Route path="*" element={<Navigate to="/obras" replace />} />
       </Routes>
     </SesionProvider>

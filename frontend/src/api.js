@@ -9,7 +9,10 @@ export class ErrorApi extends Error {
 
 export async function api(ruta, { metodo = 'GET', datos } = {}) {
   const opciones = { method: metodo, credentials: 'same-origin', headers: {} };
-  if (datos !== undefined) {
+  if (datos instanceof FormData) {
+    // El navegador arma solo el encabezado multipart con su separador.
+    opciones.body = datos;
+  } else if (datos !== undefined) {
     opciones.headers['Content-Type'] = 'application/json';
     opciones.body = JSON.stringify(datos);
   }
@@ -22,7 +25,13 @@ export async function api(ruta, { metodo = 'GET', datos } = {}) {
   }
 
   const texto = await respuesta.text();
-  const cuerpo = texto ? JSON.parse(texto) : null;
+  let cuerpo = null;
+  try {
+    cuerpo = texto ? JSON.parse(texto) : null;
+  } catch {
+    // Nginx responde en HTML cuando corta un pedido, por ejemplo si el archivo es demasiado grande.
+    if (respuesta.ok) throw new ErrorApi(respuesta.status, 'La respuesta del servidor no es válida.');
+  }
   if (!respuesta.ok) {
     throw new ErrorApi(respuesta.status, cuerpo?.mensaje ?? 'Ocurrió un error inesperado.');
   }

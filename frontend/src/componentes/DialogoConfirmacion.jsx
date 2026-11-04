@@ -1,7 +1,10 @@
 import { useEffect } from 'react';
 
 // Ventana de confirmación para las acciones que conviene pensar dos veces.
-export default function DialogoConfirmacion({ titulo, mensaje, textoConfirmar, enviando, alConfirmar, alCancelar }) {
+// Puede incluir campos adicionales como contenido, por ejemplo un motivo.
+export default function DialogoConfirmacion({
+  titulo, mensaje, textoConfirmar, enviando, deshabilitado, alConfirmar, alCancelar, children,
+}) {
   useEffect(() => {
     function alPresionarTecla(evento) {
       if (evento.key === 'Escape') alCancelar();
@@ -16,9 +19,10 @@ export default function DialogoConfirmacion({ titulo, mensaje, textoConfirmar, e
            onClick={(e) => e.stopPropagation()}>
         <h2 id="dialogo-titulo">{titulo}</h2>
         <p className="texto-secundario">{mensaje}</p>
+        {children}
         <div className="dialogo-acciones">
           <button type="button" className="boton" onClick={alCancelar} autoFocus>Cancelar</button>
-          <button type="button" className="boton boton-primario" onClick={alConfirmar} disabled={enviando}>
+          <button type="button" className="boton boton-primario" onClick={alConfirmar} disabled={enviando || deshabilitado}>
             {textoConfirmar}
           </button>
         </div>

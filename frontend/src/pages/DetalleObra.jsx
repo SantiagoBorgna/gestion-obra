@@ -122,6 +122,11 @@ function SeccionPresupuesto({ obra }) {
           <span className={`etiqueta ${COLOR_ESTADO[presupuesto.estado]}`}>{ESTADOS_PRESUPUESTO[presupuesto.estado]}</span>
         </div>
         <Link to={`/obras/${obra.id}/presupuesto`} className="boton boton-primario">{textoBoton}</Link>
+        {presupuesto.estado === 'APROBADO' && (
+          <Link to={`/obras/${obra.id}/pagos`} className="boton">
+            {obra.esArquitecto ? 'Cobros y pagos' : esCliente ? 'Ver mis pagos a la obra' : 'Ver mis cobros'}
+          </Link>
+        )}
       </>
     );
   } else if (obra.esArquitecto) {

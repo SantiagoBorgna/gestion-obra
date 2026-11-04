@@ -66,3 +66,10 @@ export function formatearFecha(iso) {
   const [anio, mes, dia] = iso.split('-');
   return `${dia}/${mes}/${anio}`;
 }
+
+/** Fecha de hoy en "2026-11-10", según la hora local y no la de UTC. */
+export function fechaDeHoy() {
+  const ahora = new Date();
+  const local = new Date(ahora.getTime() - ahora.getTimezoneOffset() * 60000);
+  return local.toISOString().slice(0, 10);
+}

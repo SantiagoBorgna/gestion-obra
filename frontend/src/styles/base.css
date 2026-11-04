@@ -224,3 +224,8 @@ p { margin: 0; }
 .form-en-linea .campo { flex: 1; min-width: 0; }
 .form-en-linea .boton { flex-shrink: 0; }
 .aviso-rojo { background: #f8e8e4; color: #8f3a27; }
+
+/* Cobros y pagos */
+.monto-anulado { text-decoration: line-through; color: var(--texto-suave); }
+.fila-saldo { margin-top: 6px; padding-top: 8px; border-top: 1px solid var(--borde); }
+.tarjeta a.boton-chico { text-align: center; }
