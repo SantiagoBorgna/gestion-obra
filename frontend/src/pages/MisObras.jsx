@@ -1,6 +1,7 @@
-import { useEffect, useState } from 'react';
+import { useCallback, useEffect, useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import BarraSuperior from '../componentes/BarraSuperior.jsx';
+import DialogoConfirmacion from '../componentes/DialogoConfirmacion.jsx';
 import { api } from '../api.js';
 import { ESTADOS_OBRA, ROLES, formatearFecha } from '../constantes.js';
 import { useSesion } from '../sesion/SesionContext.jsx';
@@ -10,6 +11,9 @@ export default function MisObras() {
   const navegar = useNavigate();
   const [obras, setObras] = useState(null);
   const [error, setError] = useState('');
+  const [confirmandoSalida, setConfirmandoSalida] = useState(false);
+
+  const cancelarSalida = useCallback(() => setConfirmandoSalida(false), []);
 
   useEffect(() => {
     api('/obras').then(setObras).catch((e) => setError(e.message));
@@ -24,7 +28,7 @@ export default function MisObras() {
 
   return (
     <div className="pantalla">
-      <BarraSuperior titulo="Mis obras" accion={<button type="button" className="boton-texto" onClick={salir}>Salir</button>} />
+      <BarraSuperior titulo="Mis obras" accion={<button type="button" className="boton-texto" onClick={() => setConfirmandoSalida(true)}>Salir</button>} />
       <main className="contenido">
         <p className="texto-secundario saludo">{usuario.nombreCompleto} · {ROLES[usuario.rol]}</p>
 
@@ -44,10 +48,21 @@ export default function MisObras() {
               <span className={`etiqueta ${obra.estado === 'EN_CURSO' ? 'etiqueta-verde' : ''}`}>{ESTADOS_OBRA[obra.estado]}</span>
             </div>
             <span className="texto-secundario">{obra.ubicacion}</span>
-            <span className="texto-suave">Cliente: {obra.cliente} · Inicio: {formatearFecha(obra.fechaInicio)}</span>
+            <span className="texto-suave">
+              {obra.cliente && `Cliente: ${obra.cliente} · `}Inicio: {formatearFecha(obra.fechaInicio)}
+            </span>
           </Link>
         ))}
       </main>
+      {confirmandoSalida && (
+        <DialogoConfirmacion
+          titulo="Salir"
+          mensaje="¿Seguro que querés salir? Vas a tener que volver a iniciar sesión."
+          textoConfirmar="Salir"
+          alConfirmar={salir}
+          alCancelar={cancelarSalida}
+        />
+      )}
     </div>
   );
 }

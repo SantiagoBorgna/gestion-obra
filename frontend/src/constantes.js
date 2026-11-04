@@ -28,6 +28,38 @@ export const ESTADOS_OBRA = {
   FINALIZADA: 'Finalizada',
 };
 
+export const ESTADOS_PRESUPUESTO = {
+  EN_ESTIMACION: 'En estimación',
+  CONSOLIDADO: 'Consolidado',
+  PRESENTADO: 'Presentado',
+  APROBADO: 'Aprobado',
+  RECHAZADO: 'Rechazado',
+};
+
+export const ESTADOS_ITEM = {
+  SIN_CARGAR: 'Sin cargar',
+  PENDIENTE_CONFIRMACION: 'Pendiente de confirmación',
+  CONFIRMADO: 'Confirmado',
+};
+
+/** Clase de la etiqueta de color para cada estado de presupuesto o de ítem. */
+export const COLOR_ESTADO = {
+  EN_ESTIMACION: 'etiqueta-ambar',
+  CONSOLIDADO: '',
+  PRESENTADO: 'etiqueta-ambar',
+  APROBADO: 'etiqueta-verde',
+  RECHAZADO: 'etiqueta-rojo',
+  SIN_CARGAR: '',
+  PENDIENTE_CONFIRMACION: 'etiqueta-ambar',
+  CONFIRMADO: 'etiqueta-verde',
+};
+
+const FORMATO_MONTO = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' });
+
+export function formatearMonto(monto) {
+  return monto === null || monto === undefined ? '—' : FORMATO_MONTO.format(monto);
+}
+
 /** Convierte "2026-11-10" en "10/11/2026" sin pasar por zonas horarias. */
 export function formatearFecha(iso) {
   if (!iso) return '';

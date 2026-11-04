@@ -174,3 +174,53 @@ p { margin: 0; }
   font: inherit; font-size: 14px; color: var(--marron-oscuro); cursor: pointer;
 }
 .enlace-secundario { text-align: center; font-size: 14px; color: var(--marron); }
+.boton-peligro { border-color: var(--rojo); color: var(--rojo); }
+.boton-verde { border-color: var(--verde); background: var(--verde); color: var(--blanco); }
+
+.etiqueta-rojo { border-color: var(--rojo); color: var(--rojo); }
+
+/* Ventana de confirmación */
+.dialogo-fondo {
+  position: fixed;
+  inset: 0;
+  z-index: 10;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 16px;
+  background: rgba(0, 0, 0, 0.4);
+}
+.dialogo {
+  width: 100%;
+  max-width: 360px;
+  padding: 20px 18px;
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  background: var(--blanco);
+  border-radius: 7px;
+}
+.dialogo h2 { font-size: 16px; }
+.dialogo-acciones { display: flex; gap: 8px; }
+.dialogo-acciones .boton { flex: 1; }
+
+/* Presupuesto */
+.contenido > .acciones-tarjeta { gap: 10px; }
+.acciones { display: flex; flex-direction: column; gap: 8px; margin-top: 4px; }
+.fila-monto {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 12px;
+  font-size: 14px; padding: 4px 0;
+}
+.fila-monto strong { white-space: nowrap; }
+.fila-total {
+  display: flex; justify-content: space-between; align-items: baseline; gap: 12px;
+  font-size: 18px; font-weight: bold;
+}
+.fila-monto + .fila-total { margin-top: 6px; padding-top: 8px; border-top: 1px solid var(--borde); }
+.lista-tareas { margin: 6px 0 0; padding: 0; list-style: none; border-top: 1px solid var(--borde); }
+.lista-tareas li { border-bottom: 1px solid var(--borde); }
+.lista-tareas li:last-child { border-bottom: none; }
+.form-en-linea { display: flex; gap: 8px; align-items: flex-end; }
+.form-en-linea .campo { flex: 1; min-width: 0; }
+.form-en-linea .boton { flex-shrink: 0; }
+.aviso-rojo { background: #f8e8e4; color: #8f3a27; }

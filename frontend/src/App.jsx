@@ -6,6 +6,8 @@ import DefinirClave from './pages/DefinirClave.jsx';
 import MisObras from './pages/MisObras.jsx';
 import NuevaObra from './pages/NuevaObra.jsx';
 import DetalleObra from './pages/DetalleObra.jsx';
+import Relevamiento from './pages/Relevamiento.jsx';
+import PresupuestoObra from './pages/PresupuestoObra.jsx';
 import Estado from './pages/Estado.jsx';
 
 export default function App() {
@@ -19,6 +21,8 @@ export default function App() {
         <Route path="/obras" element={<RutaPrivada><MisObras /></RutaPrivada>} />
         <Route path="/obras/nueva" element={<RutaPrivada><NuevaObra /></RutaPrivada>} />
         <Route path="/obras/:idObra" element={<RutaPrivada><DetalleObra /></RutaPrivada>} />
+        <Route path="/obras/:idObra/relevamiento" element={<RutaPrivada><Relevamiento /></RutaPrivada>} />
+        <Route path="/obras/:idObra/presupuesto" element={<RutaPrivada><PresupuestoObra /></RutaPrivada>} />
         <Route path="*" element={<Navigate to="/obras" replace />} />
       </Routes>
     </SesionProvider>

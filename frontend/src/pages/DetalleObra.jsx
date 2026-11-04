@@ -1,8 +1,10 @@
-import { useEffect, useState } from 'react';
-import { useParams } from 'react-router-dom';
+import { useCallback, useEffect, useState } from 'react';
+import { Link, useParams } from 'react-router-dom';
 import BarraSuperior from '../componentes/BarraSuperior.jsx';
+import DialogoConfirmacion from '../componentes/DialogoConfirmacion.jsx';
 import { api } from '../api.js';
-import { ESTADOS_OBRA, ROLES, RUBROS, formatearFecha } from '../constantes.js';
+import { COLOR_ESTADO, ESTADOS_OBRA, ESTADOS_PRESUPUESTO, ROLES, RUBROS, formatearFecha } from '../constantes.js';
+import { useSesion } from '../sesion/SesionContext.jsx';
 
 const PARTICIPANTE_VACIO = { nombreCompleto: '', email: '', rol: 'ESPECIALISTA', rubro: '' };
 
@@ -11,20 +13,29 @@ export default function DetalleObra() {
   const [obra, setObra] = useState(null);
   const [error, setError] = useState('');
   const [aviso, setAviso] = useState('');
+  const [aReenviar, setAReenviar] = useState(null);
+  const [enviando, setEnviando] = useState(false);
 
   useEffect(() => {
     api(`/obras/${idObra}`).then(setObra).catch((e) => setError(e.message));
   }, [idObra]);
 
-  async function reenviar(participante) {
+  async function reenviar() {
+    const participante = aReenviar;
     setAviso('');
+    setEnviando(true);
     try {
       await api(`/obras/${idObra}/participantes/${participante.id}/reenviar-invitacion`, { metodo: 'POST' });
-      setAviso(`Se envió una invitación nueva a ${participante.email}. El enlace anterior ya no sirve.`);
+      setAviso(`Se envió una invitación nueva a ${participante.email}. El enlace anterior ya no es válido.`);
     } catch (e) {
       setAviso(e.message);
+    } finally {
+      setEnviando(false);
+      setAReenviar(null);
     }
   }
+
+  const cancelarReenvio = useCallback(() => setAReenviar(null), []);
 
   function agregado(participante) {
     setObra({ ...obra, participantes: [...obra.participantes, participante] });
@@ -50,6 +61,8 @@ export default function DetalleObra() {
               <span className="texto-suave">Inicio: {formatearFecha(obra.fechaInicio)} · Arquitecto: {obra.arquitecto}</span>
             </div>
 
+            <SeccionPresupuesto obra={obra} />
+
             <h2 className="titulo-seccion">Participantes</h2>
             {aviso && <p className="aviso">{aviso}</p>}
             {obra.participantes.map((p) => (
@@ -59,11 +72,11 @@ export default function DetalleObra() {
                   {p.invitacionPendiente && <span className="etiqueta etiqueta-ambar">Invitación pendiente</span>}
                 </div>
                 <span className="texto-secundario">
-                  {ROLES[p.rol]}{p.rubro && ` · ${RUBROS[p.rubro]}`}
+                  {[ROLES[p.rol], RUBROS[p.rubro]].filter(Boolean).join(' · ')}
                 </span>
-                <span className="texto-suave">{p.email}</span>
+                {p.email && <span className="texto-suave">{p.email}</span>}
                 {obra.esArquitecto && p.invitacionPendiente && (
-                  <button type="button" className="boton boton-chico" onClick={() => reenviar(p)}>Reenviar invitación</button>
+                  <button type="button" className="boton boton-chico" onClick={() => setAReenviar(p)}>Reenviar invitación</button>
                 )}
               </div>
             ))}
@@ -72,7 +85,65 @@ export default function DetalleObra() {
           </>
         )}
       </main>
+      {aReenviar && (
+        <DialogoConfirmacion
+          titulo="Reenviar invitación"
+          mensaje={`El enlace actual de ${aReenviar.email} se va a invalidar. ¿Seguro que querés reenviar la invitación?`}
+          textoConfirmar="Reenviar"
+          enviando={enviando}
+          alConfirmar={reenviar}
+          alCancelar={cancelarReenvio}
+        />
+      )}
     </div>
+  );
+}
+
+// Acceso al presupuesto: según el rol y el estado cambia el texto y a dónde lleva.
+function SeccionPresupuesto({ obra }) {
+  const { usuario } = useSesion();
+  const [presupuesto, setPresupuesto] = useState(undefined);
+
+  useEffect(() => {
+    api(`/obras/${obra.id}/presupuesto`).then(setPresupuesto).catch(() => setPresupuesto(null));
+  }, [obra.id]);
+
+  if (presupuesto === undefined) return null;
+
+  const esCliente = usuario.rol === 'CLIENTE';
+  let contenido;
+  if (presupuesto) {
+    const textoColaborador = presupuesto.estado === 'EN_ESTIMACION' ? 'Cargar costos' : 'Ver costos';
+    const textoBoton = obra.esArquitecto ? 'Ver presupuesto' : esCliente ? 'Revisar presupuesto' : textoColaborador;
+    contenido = (
+      <>
+        <div className="tarjeta-fila">
+          <span className="texto-secundario">Estado</span>
+          <span className={`etiqueta ${COLOR_ESTADO[presupuesto.estado]}`}>{ESTADOS_PRESUPUESTO[presupuesto.estado]}</span>
+        </div>
+        <Link to={`/obras/${obra.id}/presupuesto`} className="boton boton-primario">{textoBoton}</Link>
+      </>
+    );
+  } else if (obra.esArquitecto) {
+    contenido = (
+      <>
+        <span className="texto-secundario">Cargá las tareas de la obra y solicitá los costos a los colaboradores.</span>
+        <Link to={`/obras/${obra.id}/relevamiento`} className="boton boton-primario">Ir al relevamiento</Link>
+      </>
+    );
+  } else {
+    contenido = (
+      <span className="texto-secundario">
+        {esCliente ? 'El arquitecto todavía no presentó el presupuesto.' : 'Todavía no se solicitaron los costos.'}
+      </span>
+    );
+  }
+
+  return (
+    <>
+      <h2 className="titulo-seccion">Presupuesto</h2>
+      <div className="tarjeta acciones-tarjeta">{contenido}</div>
+    </>
   );
 }
 
