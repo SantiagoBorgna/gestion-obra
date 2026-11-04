@@ -33,6 +33,10 @@ public class ParticipanteService {
         if (!rol.esColaborador()) {
             throw ErrorNegocio.invalido("El participante tiene que ser cuadrilla o especialista.");
         }
+        obra.responsableDe(rubro).ifPresent(responsable -> {
+            throw ErrorNegocio.conflicto(rubro.getNombre() + " ya tiene responsable en esta obra: "
+                + responsable.getNombreCompleto() + ".");
+        });
 
         Usuario usuario = usuarios.obtenerOCrear(email, nombreCompleto, rol);
         if (obra.participa(usuario.getId())) {

@@ -3,6 +3,7 @@ package com.gestionobra.obra.entity;
 import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Optional;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -89,6 +90,26 @@ public class Obra {
 
     public boolean esArquitecto(Long idUsuario) {
         return arquitecto.getId().equals(idUsuario);
+    }
+
+    public boolean esCliente(Long idUsuario) {
+        return cliente.getId().equals(idUsuario);
+    }
+
+    /** Rubro que tiene a cargo el colaborador en esta obra. */
+    public Optional<Rubro> rubroDe(Long idUsuario) {
+        return asignaciones.stream()
+            .filter(a -> a.getColaborador().getId().equals(idUsuario))
+            .map(AsignacionColaborador::getRubro)
+            .findFirst();
+    }
+
+    /** Colaborador responsable del rubro en esta obra. */
+    public Optional<Usuario> responsableDe(Rubro rubro) {
+        return asignaciones.stream()
+            .filter(a -> a.getRubro() == rubro)
+            .map(AsignacionColaborador::getColaborador)
+            .findFirst();
     }
 
     public Long getId() {

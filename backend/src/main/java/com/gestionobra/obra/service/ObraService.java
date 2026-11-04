@@ -23,12 +23,14 @@ import com.gestionobra.usuario.service.UsuarioSesion;
 @Service
 public class ObraService {
 
+    /** El cliente va vacío para el colaborador, que no ve datos del cliente. */
     public record ObraResumen(Long id, String titulo, String ubicacion, LocalDate fechaInicio, EstadoObra estado,
                               String cliente) {
 
-        static ObraResumen de(Obra obra) {
+        static ObraResumen de(Obra obra, Long idUsuario) {
+            boolean veCliente = obra.esArquitecto(idUsuario) || obra.esCliente(idUsuario);
             return new ObraResumen(obra.getId(), obra.getTitulo(), obra.getUbicacion(), obra.getFechaInicio(),
-                obra.getEstado(), obra.getCliente().getNombreCompleto());
+                obra.getEstado(), veCliente ? obra.getCliente().getNombreCompleto() : null);
         }
     }
 
@@ -39,6 +41,11 @@ public class ObraService {
         static Participante de(Usuario usuario, Rubro rubro) {
             return new Participante(usuario.getId(), usuario.getNombreCompleto(), usuario.getEmail(),
                 usuario.getRol(), rubro, !usuario.tieneClave());
+        }
+
+        /** Lo que ve el cliente de un colaborador: solo el nombre y el rubro. */
+        static Participante reducido(Usuario usuario, Rubro rubro) {
+            return new Participante(usuario.getId(), usuario.getNombreCompleto(), null, null, rubro, false);
         }
     }
 
@@ -76,7 +83,7 @@ public class ObraService {
 
     @Transactional(readOnly = true)
     public List<ObraResumen> listar(UsuarioSesion sesion) {
-        return obras.findDeUsuario(sesion.id()).stream().map(ObraResumen::de).toList();
+        return obras.findDeUsuario(sesion.id()).stream().map(obra -> ObraResumen.de(obra, sesion.id())).toList();
     }
 
     @Transactional(readOnly = true)
@@ -101,13 +108,31 @@ public class ObraService {
     }
 
     private ObraDetalle detalle(Obra obra, UsuarioSesion sesion) {
-        List<Participante> lista = new ArrayList<>();
-        lista.add(Participante.de(obra.getCliente(), null));
-        for (AsignacionColaborador asignacion : obra.getAsignaciones()) {
-            lista.add(Participante.de(asignacion.getColaborador(), asignacion.getRubro()));
-        }
         return new ObraDetalle(obra.getId(), obra.getTitulo(), obra.getDescripcion(), obra.getUbicacion(),
             obra.getFechaInicio(), obra.getFechaFin(), obra.getEstado(), obra.getArquitecto().getNombreCompleto(),
-            obra.esArquitecto(sesion.id()), lista);
+            obra.esArquitecto(sesion.id()), participantesVisibles(obra, sesion.id()));
+    }
+
+    /**
+     * El arquitecto ve todos los datos. El cliente ve el nombre y el rubro de los colaboradores.
+     * El colaborador ve solo sus propios datos: ni al cliente ni a los demás colaboradores.
+     */
+    private List<Participante> participantesVisibles(Obra obra, Long idUsuario) {
+        boolean esArquitecto = obra.esArquitecto(idUsuario);
+        boolean esCliente = obra.esCliente(idUsuario);
+
+        List<Participante> lista = new ArrayList<>();
+        if (esArquitecto || esCliente) {
+            lista.add(Participante.de(obra.getCliente(), null));
+        }
+        for (AsignacionColaborador asignacion : obra.getAsignaciones()) {
+            Usuario colaborador = asignacion.getColaborador();
+            if (esArquitecto || colaborador.getId().equals(idUsuario)) {
+                lista.add(Participante.de(colaborador, asignacion.getRubro()));
+            } else if (esCliente) {
+                lista.add(Participante.reducido(colaborador, asignacion.getRubro()));
+            }
+        }
+        return lista;
     }
 }

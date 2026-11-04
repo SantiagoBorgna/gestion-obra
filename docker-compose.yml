@@ -24,6 +24,7 @@ services:
   backend:
     build: ./backend
     environment:
+      TZ: ${TZ:-America/Argentina/Buenos_Aires}
       DB_URL: jdbc:postgresql://db:5432/${DB_NAME:-gestionobra}
       DB_USER: ${DB_USER:-gestionobra}
       DB_PASSWORD: ${DB_PASSWORD:-gestionobra}

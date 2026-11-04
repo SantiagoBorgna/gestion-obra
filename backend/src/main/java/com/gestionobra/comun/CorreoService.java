@@ -37,4 +37,13 @@ public class CorreoService {
                 "No se pudo enviar el correo. Revisá la dirección e intentá de nuevo.");
         }
     }
+
+    /** Para avisos informativos: si el envío falla queda en el log y la operación sigue igual. */
+    public void enviarAviso(String destinatario, String asunto, String texto) {
+        try {
+            enviar(destinatario, asunto, texto);
+        } catch (ErrorNegocio e) {
+            log.warn("No se envió el aviso \"{}\" a {}", asunto, destinatario);
+        }
+    }
 }
