@@ -21,7 +21,7 @@ import com.gestionobra.usuario.repository.UsuarioRepository;
 
 /**
  * Enlaces de un solo uso para definir la contraseña: la invitación a un participante
- * nuevo (vence a los 7 días) y la recuperación de contraseña (vence en 1 hora).
+ * nuevo (vence a los 7 días) y la recuperación de contraseña (vence en 30 minutos).
  * Cada usuario tiene un solo enlace vigente, así que generar uno nuevo invalida el anterior.
  */
 @Service
@@ -31,7 +31,7 @@ public class InvitacionService {
     }
 
     private static final Duration VIGENCIA_INVITACION = Duration.ofDays(7);
-    private static final Duration VIGENCIA_RECUPERACION = Duration.ofHours(1);
+    private static final Duration VIGENCIA_RECUPERACION = Duration.ofMinutes(30);
     private static final String MENSAJE_ENLACE_INVALIDO =
         "El enlace no es válido o ya venció. Pedí uno nuevo.";
 
@@ -40,10 +40,13 @@ public class InvitacionService {
     private final CorreoService correo;
     private final ValidadorClave validador;
     private final PasswordEncoder codificador;
+    private final RegistroSesiones sesiones;
     private final String urlApp;
 
     public InvitacionService(UsuarioRepository usuarios, CorreoService correo, ValidadorClave validador,
-                             PasswordEncoder codificador, @Value("${app.url}") String urlApp) {
+                             PasswordEncoder codificador, RegistroSesiones sesiones,
+                             @Value("${app.url}") String urlApp) {
+        this.sesiones = sesiones;
         this.usuarios = usuarios;
         this.correo = correo;
         this.validador = validador;
@@ -80,7 +83,7 @@ public class InvitacionService {
 
                     %s
 
-                    El enlace se puede usar una sola vez y vence en 1 hora.
+                    El enlace se puede usar una sola vez y vence en 30 minutos.
                     Si no fuiste vos, ignorá este correo.
                     """.formatted(usuario.getNombreCompleto(), enlace(token)));
             });
@@ -97,6 +100,7 @@ public class InvitacionService {
         Usuario usuario = usuarioDelToken(token);
         validador.validar(clave, usuario);
         usuario.cambiarClave(codificador.encode(clave));
+        sesiones.cerrarSesiones(usuario.getId());
     }
 
     private Usuario usuarioDelToken(String token) {

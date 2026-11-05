@@ -27,7 +27,7 @@ export default function RecuperarClave() {
     return (
       <PantallaAcceso titulo="Revisá tu correo">
         <p className="texto-secundario">
-          Si el correo está registrado, te enviamos un enlace para definir una nueva contraseña. Vence en 1 hora.
+          Si el correo está registrado, te enviamos un enlace para definir una nueva contraseña. Vence en 30 minutos.
         </p>
         <Link to="/login" className="enlace-secundario">Volver a iniciar sesión</Link>
       </PantallaAcceso>

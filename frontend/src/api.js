@@ -24,6 +24,12 @@ export async function api(ruta, { metodo = 'GET', datos } = {}) {
     throw new ErrorApi(0, 'No se pudo conectar con el servidor.');
   }
 
+  // La sesión venció o se cerró: se vuelve al inicio de sesión. Las rutas de /auth responden 401 sin que sea un vencimiento.
+  if (respuesta.status === 401 && !ruta.startsWith('/auth/')) {
+    window.location.assign('/login');
+    throw new ErrorApi(401, 'Tu sesión venció. Volvé a iniciar sesión.');
+  }
+
   const texto = await respuesta.text();
   let cuerpo = null;
   try {

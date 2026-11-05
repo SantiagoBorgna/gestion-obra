@@ -22,6 +22,7 @@ import org.springframework.web.bind.annotation.RestController;
 
 import com.gestionobra.usuario.service.AutenticacionService;
 import com.gestionobra.usuario.service.InvitacionService;
+import com.gestionobra.usuario.service.RegistroSesiones;
 import com.gestionobra.usuario.service.UsuarioSesion;
 
 @RestController
@@ -39,9 +40,11 @@ public class AutenticacionController {
     private final AutenticacionService autenticacion;
     private final InvitacionService invitaciones;
     private final SecurityContextRepository repositorioContexto;
+    private final RegistroSesiones sesiones;
 
     public AutenticacionController(AutenticacionService autenticacion, InvitacionService invitaciones,
-                                   SecurityContextRepository repositorioContexto) {
+                                   SecurityContextRepository repositorioContexto, RegistroSesiones sesiones) {
+        this.sesiones = sesiones;
         this.autenticacion = autenticacion;
         this.invitaciones = invitaciones;
         this.repositorioContexto = repositorioContexto;
@@ -62,6 +65,7 @@ public class AutenticacionController {
         contexto.setAuthentication(autenticado);
         SecurityContextHolder.setContext(contexto);
         repositorioContexto.saveContext(contexto, request, response);
+        sesiones.registrar(usuario.id(), request.getSession());
 
         return usuario;
     }

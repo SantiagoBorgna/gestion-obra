@@ -1,5 +1,8 @@
 package com.gestionobra.config;
 
+import java.time.Duration;
+
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
@@ -10,6 +13,7 @@ import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.HttpStatusEntryPoint;
 import org.springframework.security.web.authentication.logout.HttpStatusReturningLogoutSuccessHandler;
 import org.springframework.security.web.context.HttpSessionSecurityContextRepository;
+import org.springframework.security.web.context.SecurityContextHolderFilter;
 import org.springframework.security.web.context.SecurityContextRepository;
 
 /**
@@ -24,9 +28,11 @@ import org.springframework.security.web.context.SecurityContextRepository;
 public class SecurityConfig {
 
     @Bean
-    public SecurityFilterChain filterChain(HttpSecurity http, SecurityContextRepository repositorioContexto)
+    public SecurityFilterChain filterChain(HttpSecurity http, SecurityContextRepository repositorioContexto,
+                                           @Value("${app.sesion.limite-absoluto}") Duration limiteSesion)
             throws Exception {
         http
+            .addFilterBefore(new LimiteSesionFilter(limiteSesion), SecurityContextHolderFilter.class)
             .csrf(csrf -> csrf.disable())
             .httpBasic(basic -> basic.disable())
             .formLogin(form -> form.disable())
