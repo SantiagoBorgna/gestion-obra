@@ -42,11 +42,6 @@ public class ObraService {
             return new Participante(usuario.getId(), usuario.getNombreCompleto(), usuario.getEmail(),
                 usuario.getRol(), rubro, !usuario.tieneClave());
         }
-
-        /** Lo que ve el cliente de un colaborador: solo el nombre y el rubro. */
-        static Participante reducido(Usuario usuario, Rubro rubro) {
-            return new Participante(usuario.getId(), usuario.getNombreCompleto(), null, null, rubro, false);
-        }
     }
 
     public record ObraDetalle(Long id, String titulo, String descripcion, String ubicacion, LocalDate fechaInicio,
@@ -113,25 +108,15 @@ public class ObraService {
             obra.esArquitecto(sesion.id()), participantesVisibles(obra, sesion.id()));
     }
 
-    /**
-     * El arquitecto ve todos los datos. El cliente ve el nombre y el rubro de los colaboradores.
-     * El colaborador ve solo sus propios datos: ni al cliente ni a los demás colaboradores.
-     */
+    /** Solo el arquitecto ve a los participantes. Hay una fila por rubro, aunque sea la misma persona. */
     private List<Participante> participantesVisibles(Obra obra, Long idUsuario) {
-        boolean esArquitecto = obra.esArquitecto(idUsuario);
-        boolean esCliente = obra.esCliente(idUsuario);
-
-        List<Participante> lista = new ArrayList<>();
-        if (esArquitecto || esCliente) {
-            lista.add(Participante.de(obra.getCliente(), null));
+        if (!obra.esArquitecto(idUsuario)) {
+            return List.of();
         }
+        List<Participante> lista = new ArrayList<>();
+        lista.add(Participante.de(obra.getCliente(), null));
         for (AsignacionColaborador asignacion : obra.getAsignaciones()) {
-            Usuario colaborador = asignacion.getColaborador();
-            if (esArquitecto || colaborador.getId().equals(idUsuario)) {
-                lista.add(Participante.de(colaborador, asignacion.getRubro()));
-            } else if (esCliente) {
-                lista.add(Participante.reducido(colaborador, asignacion.getRubro()));
-            }
+            lista.add(Participante.de(asignacion.getColaborador(), asignacion.getRubro()));
         }
         return lista;
     }

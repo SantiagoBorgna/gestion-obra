@@ -21,10 +21,13 @@ export default function TarjetaMovimiento({ idObra, movimiento, alAnular }) {
         </span>
       )}
       <div className="form-en-linea">
-        <a className="boton boton-chico" href={`/api/obras/${idObra}/pagos/${movimiento.id}/comprobante`}
-           target="_blank" rel="noopener noreferrer">
-          Ver comprobante
-        </a>
+        {movimiento.comprobantes.map((comprobante) => (
+          <a key={comprobante.id} className="boton boton-chico"
+             href={`/api/obras/${idObra}/pagos/${movimiento.id}/comprobantes/${comprobante.id}`}
+             target="_blank" rel="noopener noreferrer">
+            {comprobante.nombre}
+          </a>
+        ))}
         {alAnular && !anulado && (
           <button type="button" className="boton boton-chico boton-peligro" onClick={() => alAnular(movimiento)}>Anular</button>
         )}

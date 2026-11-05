@@ -1,17 +1,25 @@
 import { useState } from 'react';
+import FormularioEstimacion from './FormularioEstimacion.jsx';
 import { api } from '../../api.js';
 import { COLOR_ESTADO, ESTADOS_ITEM, ESTADOS_PRESUPUESTO, RUBROS, formatearFecha, formatearMonto } from '../../constantes.js';
 
 // Seguimiento de los rubros, honorarios (HU-13), consolidación (HU-06) y presentación (HU-07).
-export default function VistaArquitecto({ idObra, presupuesto, tareas, alCambiar }) {
+export default function VistaArquitecto({ idObra, presupuesto, tareas, alCambiar, alRecargar }) {
   const [error, setError] = useState('');
   const [enviando, setEnviando] = useState(false);
+  const [editando, setEditando] = useState(null);
 
   const rubros = presupuesto.items.filter((item) => item.tipo === 'RUBRO');
   const honorarios = presupuesto.items.find((item) => item.tipo === 'HONORARIOS');
   const { estado } = presupuesto;
   const enEstimacion = estado === 'EN_ESTIMACION';
-  const puedeConsolidar = enEstimacion && honorarios && rubros.every((item) => item.estado === 'CONFIRMADO');
+  const rubrosFaltantes = rubros.filter((item) => item.estado !== 'CONFIRMADO').map((item) => RUBROS[item.rubro]);
+  const puedeConsolidar = enEstimacion && honorarios && rubrosFaltantes.length === 0;
+
+  async function costosGuardados() {
+    setEditando(null);
+    await alRecargar();
+  }
 
   async function ejecutar(ruta, opciones = { metodo: 'POST' }) {
     setError('');
@@ -50,15 +58,28 @@ export default function VistaArquitecto({ idObra, presupuesto, tareas, alCambiar
             <span className={`etiqueta ${COLOR_ESTADO[item.estado]}`}>{ESTADOS_ITEM[item.estado]}</span>
           </div>
           <span className="texto-suave">Responsable: {item.responsable}</span>
-          <ul className="lista-tareas">
-            {tareas.filter((t) => t.rubro === item.rubro).map((t) => (
-              <li key={t.id} className="fila-monto">
-                <span>{t.descripcion}</span>
-                <span>{formatearMonto(t.montoEstimado)}</span>
-              </li>
-            ))}
-          </ul>
-          <div className="fila-monto"><span>Monto del rubro</span><strong>{formatearMonto(item.monto)}</strong></div>
+          {item.fechaActualizacion && <span className="texto-suave">Actualizado: {formatearFecha(item.fechaActualizacion)}</span>}
+          {editando === item.id ? (
+            <FormularioEstimacion idObra={idObra} tareas={tareas.filter((t) => t.rubro === item.rubro)}
+                                  textoBoton="Guardar" alGuardar={costosGuardados} alCancelar={() => setEditando(null)} />
+          ) : (
+            <>
+              <ul className="lista-tareas">
+                {tareas.filter((t) => t.rubro === item.rubro).map((t) => (
+                  <li key={t.id} className="fila-monto">
+                    <span>{t.descripcion}</span>
+                    <span>{formatearMonto(t.montoEstimado)}</span>
+                  </li>
+                ))}
+              </ul>
+              <div className="fila-monto"><span>Monto del rubro</span><strong>{formatearMonto(item.monto)}</strong></div>
+            </>
+          )}
+          {enEstimacion && editando !== item.id && (
+            <button type="button" className="boton boton-chico" onClick={() => setEditando(item.id)}>
+              {item.estado === 'SIN_CARGAR' ? 'Cargar' : 'Editar'}
+            </button>
+          )}
           {enEstimacion && item.estado === 'PENDIENTE_CONFIRMACION' && (
             <button type="button" className="boton boton-chico boton-verde" disabled={enviando}
                     onClick={() => ejecutar(`/items/${item.id}/confirmar`)}>
@@ -92,7 +113,9 @@ export default function VistaArquitecto({ idObra, presupuesto, tareas, alCambiar
               Consolidar presupuesto
             </button>
             {!puedeConsolidar && (
-              <p className="texto-suave">Para consolidar hacen falta todos los rubros confirmados y los honorarios cargados.</p>
+              <p className="texto-ambar">
+                Para consolidar falta completar: {[...rubrosFaltantes, ...(honorarios ? [] : ['Honorarios'])].join(', ')}.
+              </p>
             )}
           </>
         )}

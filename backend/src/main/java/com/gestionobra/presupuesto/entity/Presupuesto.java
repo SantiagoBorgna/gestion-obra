@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
+import java.util.stream.Collectors;
 
 import jakarta.persistence.CascadeType;
 import jakarta.persistence.Column;
@@ -86,8 +87,12 @@ public class Presupuesto {
 
     public void consolidar() {
         exigirEstado(EstadoPresupuesto.EN_ESTIMACION, "El presupuesto no está en estimación.");
-        if (!items.stream().filter(ItemDePresupuesto::esRubro).allMatch(ItemDePresupuesto::estaConfirmado)) {
-            throw ErrorNegocio.conflicto("Para consolidar, todos los rubros tienen que estar confirmados.");
+        String faltantes = items.stream()
+            .filter(item -> item.esRubro() && !item.estaConfirmado())
+            .map(item -> item.getNombreRubro().getNombre())
+            .collect(Collectors.joining(", "));
+        if (!faltantes.isEmpty()) {
+            throw ErrorNegocio.conflicto("Para consolidar faltan completar o confirmar estos rubros: " + faltantes + ".");
         }
         if (honorarios().isEmpty()) {
             throw ErrorNegocio.conflicto("Para consolidar, cargá los honorarios.");
@@ -131,6 +136,10 @@ public class Presupuesto {
         return estado == EstadoPresupuesto.PRESENTADO
             || estado == EstadoPresupuesto.APROBADO
             || estado == EstadoPresupuesto.RECHAZADO;
+    }
+
+    public BigDecimal montoHonorarios() {
+        return honorarios().map(ItemDePresupuesto::getMonto).orElse(BigDecimal.ZERO);
     }
 
     public void cambiarUmbral(BigDecimal umbral) {

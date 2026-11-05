@@ -63,10 +63,10 @@ export default function DetalleObra() {
 
             <SeccionPresupuesto obra={obra} />
 
-            <h2 className="titulo-seccion">Participantes</h2>
+            {obra.esArquitecto && <h2 className="titulo-seccion">Participantes</h2>}
             {aviso && <p className="aviso">{aviso}</p>}
             {obra.participantes.map((p) => (
-              <div key={p.id} className="tarjeta">
+              <div key={`${p.id}-${p.rubro}`} className="tarjeta">
                 <div className="tarjeta-fila">
                   <strong>{p.nombreCompleto}</strong>
                   {p.invitacionPendiente && <span className="etiqueta etiqueta-ambar">Invitación pendiente</span>}

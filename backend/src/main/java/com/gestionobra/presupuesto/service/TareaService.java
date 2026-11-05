@@ -1,7 +1,12 @@
 package com.gestionobra.presupuesto.service;
 
 import java.math.BigDecimal;
+import java.util.EnumSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
+import java.util.function.Function;
+import java.util.stream.Collectors;
 
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -28,6 +33,9 @@ public class TareaService {
         }
     }
 
+    public record CostoTarea(Long idTarea, BigDecimal monto) {
+    }
+
     private final TareaRepository tareas;
     private final PresupuestoRepository presupuestos;
     private final ObraService obras;
@@ -39,7 +47,7 @@ public class TareaService {
     }
 
     /**
-     * El arquitecto ve todas las tareas. El colaborador ve las de su rubro, y recién
+     * El arquitecto ve todas las tareas. El colaborador ve las de sus rubros, y recién
      * cuando se solicitaron los costos. El cliente no ve las tareas.
      */
     @Transactional(readOnly = true)
@@ -54,9 +62,11 @@ public class TareaService {
         if (!presupuestos.existsByObraId(idObra)) {
             return List.of();
         }
-        return obra.rubroDe(sesion.id())
-            .map(rubro -> tareas.findByObraIdAndRubroOrderById(idObra, rubro).stream().map(TareaVista::de).toList())
-            .orElse(List.of());
+        List<Rubro> propios = obra.rubrosDe(sesion.id());
+        return tareas.findByObraIdOrderById(idObra).stream()
+            .filter(tarea -> propios.contains(tarea.getRubro()))
+            .map(TareaVista::de)
+            .toList();
     }
 
     @Transactional
@@ -82,13 +92,18 @@ public class TareaService {
         tareas.delete(tareaDeLaObra(idObra, idTarea));
     }
 
-    /** Carga el costo de una tarea y recalcula el monto y el estado del rubro. */
+    /**
+     * Guarda de una vez los costos enviados y recalcula los rubros en los que algo cambió.
+     * Puede cargarlos el responsable del rubro o el arquitecto. Reenviar los mismos valores
+     * no cambia nada, así un rubro confirmado no vuelve a quedar pendiente sin motivo.
+     */
     @Transactional
-    public TareaVista cargarCosto(Long idObra, Long idTarea, BigDecimal monto, UsuarioSesion sesion) {
+    public List<TareaVista> guardarEstimacion(Long idObra, List<CostoTarea> costos, UsuarioSesion sesion) {
         Obra obra = obras.obraAccesible(idObra, sesion);
-        Tarea tarea = tareaDeLaObra(idObra, idTarea);
-        if (obra.rubroDe(sesion.id()).filter(rubro -> rubro == tarea.getRubro()).isEmpty()) {
-            throw ErrorNegocio.prohibido("Solo el responsable del rubro puede cargar este costo.");
+        boolean esArquitecto = obra.esArquitecto(sesion.id());
+        List<Rubro> propios = obra.rubrosDe(sesion.id());
+        if (!esArquitecto && propios.isEmpty()) {
+            throw ErrorNegocio.prohibido("Solo el responsable del rubro puede cargar costos.");
         }
         Presupuesto presupuesto = presupuestos.findByObraId(idObra)
             .orElseThrow(() -> ErrorNegocio.conflicto("Todavía no se solicitaron los costos."));
@@ -96,16 +111,37 @@ public class TareaService {
             throw ErrorNegocio.conflicto("Los costos ya no se pueden modificar: la estimación está cerrada.");
         }
 
-        tarea.cargarMonto(monto);
-        ItemDePresupuesto item = presupuesto.itemDeRubro(tarea.getRubro())
-            .orElseThrow(() -> new IllegalStateException("Falta el ítem del rubro " + tarea.getRubro()));
-        List<Tarea> delRubro = tareas.findByObraIdAndRubroOrderById(idObra, tarea.getRubro());
-        BigDecimal suma = delRubro.stream()
-            .filter(Tarea::tieneMonto)
-            .map(Tarea::getMontoEstimado)
-            .reduce(BigDecimal.ZERO, BigDecimal::add);
-        item.actualizarMonto(suma, delRubro.stream().allMatch(Tarea::tieneMonto));
-        return TareaVista.de(tarea);
+        List<Tarea> tareasDeObra = tareas.findByObraIdOrderById(idObra);
+        Map<Long, Tarea> porId = tareasDeObra.stream().collect(Collectors.toMap(Tarea::getId, Function.identity()));
+        Set<Rubro> modificados = EnumSet.noneOf(Rubro.class);
+        for (CostoTarea costo : costos) {
+            Tarea tarea = porId.get(costo.idTarea());
+            if (tarea == null) {
+                throw ErrorNegocio.noEncontrado("No se encontró la tarea.");
+            }
+            if (!esArquitecto && !propios.contains(tarea.getRubro())) {
+                throw ErrorNegocio.prohibido("Solo el responsable del rubro puede cargar este costo.");
+            }
+            if (!tarea.tieneMonto() || tarea.getMontoEstimado().compareTo(costo.monto()) != 0) {
+                tarea.cargarMonto(costo.monto());
+                modificados.add(tarea.getRubro());
+            }
+        }
+
+        for (Rubro rubro : modificados) {
+            ItemDePresupuesto item = presupuesto.itemDeRubro(rubro)
+                .orElseThrow(() -> new IllegalStateException("Falta el ítem del rubro " + rubro));
+            List<Tarea> delRubro = tareasDeObra.stream().filter(tarea -> tarea.getRubro() == rubro).toList();
+            BigDecimal suma = delRubro.stream()
+                .filter(Tarea::tieneMonto)
+                .map(Tarea::getMontoEstimado)
+                .reduce(BigDecimal.ZERO, BigDecimal::add);
+            item.actualizarMonto(suma, delRubro.stream().allMatch(Tarea::tieneMonto), esArquitecto);
+        }
+        return tareasDeObra.stream()
+            .filter(tarea -> esArquitecto || propios.contains(tarea.getRubro()))
+            .map(TareaVista::de)
+            .toList();
     }
 
     private void exigirRelevamientoAbierto(Long idObra) {

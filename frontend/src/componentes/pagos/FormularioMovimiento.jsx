@@ -2,6 +2,7 @@ import { useRef, useState } from 'react';
 import { RUBROS, fechaDeHoy, formatearMonto } from '../../constantes.js';
 
 const TAMANIO_MAXIMO = 10 * 1024 * 1024;
+const CANTIDAD_MAXIMA = 5;
 
 // Alta de un cobro (INGRESO) o de un pago a un colaborador (EGRESO), con comprobante obligatorio.
 export default function FormularioMovimiento({ tipo, rubros, alGuardar, alCancelar }) {
@@ -19,9 +20,13 @@ export default function FormularioMovimiento({ tipo, rubros, alGuardar, alCancel
   async function enviar(evento) {
     evento.preventDefault();
     setError('');
-    const comprobante = archivo.current.files[0];
-    if (comprobante && comprobante.size > TAMANIO_MAXIMO) {
-      setError('El comprobante puede pesar como máximo 10 MB.');
+    const comprobantes = [...archivo.current.files];
+    if (comprobantes.length > CANTIDAD_MAXIMA) {
+      setError(`Podés adjuntar hasta ${CANTIDAD_MAXIMA} comprobantes.`);
+      return;
+    }
+    if (comprobantes.some((comprobante) => comprobante.size > TAMANIO_MAXIMO)) {
+      setError('Cada comprobante puede pesar como máximo 10 MB.');
       return;
     }
     const datos = new FormData();
@@ -30,7 +35,7 @@ export default function FormularioMovimiento({ tipo, rubros, alGuardar, alCancel
     datos.append('fecha', fecha);
     datos.append('monto', monto);
     datos.append('descripcion', descripcion);
-    datos.append('archivo', comprobante);
+    comprobantes.forEach((comprobante) => datos.append('archivos', comprobante));
 
     setEnviando(true);
     try {
@@ -70,8 +75,8 @@ export default function FormularioMovimiento({ tipo, rubros, alGuardar, alCancel
         <input value={descripcion} maxLength={300} onChange={(e) => setDescripcion(e.target.value)} required />
       </label>
       <label className="campo">
-        <span>Comprobante (PDF, JPG o PNG, hasta 10 MB)</span>
-        <input type="file" ref={archivo} accept=".pdf,.jpg,.jpeg,.png" required />
+        <span>Comprobantes (PDF, JPG o PNG, hasta 5 de 10 MB cada uno)</span>
+        <input type="file" ref={archivo} accept=".pdf,.jpg,.jpeg,.png" multiple required />
       </label>
       {error && <p className="texto-error">{error}</p>}
       <div className="form-en-linea">

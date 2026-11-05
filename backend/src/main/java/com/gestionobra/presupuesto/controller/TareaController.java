@@ -7,6 +7,7 @@ import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMin;
 import jakarta.validation.constraints.Digits;
 import jakarta.validation.constraints.NotBlank;
+import jakarta.validation.constraints.NotEmpty;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
 
@@ -38,10 +39,15 @@ public class TareaController {
     }
 
     public record CostoRequest(
+        @NotNull(message = "Falta indicar la tarea.") Long idTarea,
         @NotNull(message = "Ingresá el costo.")
         @DecimalMin(value = "0.01", message = "El costo tiene que ser mayor a cero.")
         @Digits(integer = 12, fraction = 2, message = "El costo admite hasta 12 enteros y 2 decimales.")
         BigDecimal monto) {
+    }
+
+    public record EstimacionRequest(
+        @NotEmpty(message = "Cargá al menos un costo.") List<@Valid CostoRequest> costos) {
     }
 
     private final TareaService tareas;
@@ -77,10 +83,13 @@ public class TareaController {
         return ResponseEntity.noContent().build();
     }
 
-    @PutMapping("/{idTarea}/costo")
-    public TareaService.TareaVista cargarCosto(@PathVariable Long idObra, @PathVariable Long idTarea,
-                                               @Valid @RequestBody CostoRequest datos,
-                                               @AuthenticationPrincipal UsuarioSesion sesion) {
-        return tareas.cargarCosto(idObra, idTarea, datos.monto(), sesion);
+    @PutMapping("/costos")
+    public List<TareaService.TareaVista> guardarEstimacion(@PathVariable Long idObra,
+                                                           @Valid @RequestBody EstimacionRequest datos,
+                                                           @AuthenticationPrincipal UsuarioSesion sesion) {
+        List<TareaService.CostoTarea> costos = datos.costos().stream()
+            .map(costo -> new TareaService.CostoTarea(costo.idTarea(), costo.monto()))
+            .toList();
+        return tareas.guardarEstimacion(idObra, costos, sesion);
     }
 }

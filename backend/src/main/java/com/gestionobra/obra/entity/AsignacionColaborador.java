@@ -17,7 +17,10 @@ import jakarta.persistence.Table;
 
 import com.gestionobra.usuario.entity.Usuario;
 
-/** Colaborador (cuadrilla o especialista) asignado a una obra, con el rubro que tiene a cargo. */
+/**
+ * Responsable de un rubro en una obra. Cada rubro tiene un solo responsable,
+ * y una misma persona (cuadrilla o especialista) puede tener varios rubros.
+ */
 @Entity
 @Table(name = "asignacion_colaborador")
 public class AsignacionColaborador {
@@ -30,23 +33,17 @@ public class AsignacionColaborador {
     @JoinColumn(name = "id_obra")
     private Obra obra;
 
-    @MapsId("idColaborador")
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "id_colaborador")
     private Usuario colaborador;
-
-    @Enumerated(EnumType.STRING)
-    @Column(nullable = false)
-    private Rubro rubro;
 
     protected AsignacionColaborador() {
     }
 
     AsignacionColaborador(Obra obra, Usuario colaborador, Rubro rubro) {
-        this.id = new Clave(obra.getId(), colaborador.getId());
+        this.id = new Clave(obra.getId(), rubro);
         this.obra = obra;
         this.colaborador = colaborador;
-        this.rubro = rubro;
     }
 
     public Obra getObra() {
@@ -58,7 +55,7 @@ public class AsignacionColaborador {
     }
 
     public Rubro getRubro() {
-        return rubro;
+        return id.rubro;
     }
 
     @Embeddable
@@ -67,15 +64,16 @@ public class AsignacionColaborador {
         @Column(name = "id_obra")
         private Long idObra;
 
-        @Column(name = "id_colaborador")
-        private Long idColaborador;
+        @Enumerated(EnumType.STRING)
+        @Column(name = "rubro")
+        private Rubro rubro;
 
         protected Clave() {
         }
 
-        Clave(Long idObra, Long idColaborador) {
+        Clave(Long idObra, Rubro rubro) {
             this.idObra = idObra;
-            this.idColaborador = idColaborador;
+            this.rubro = rubro;
         }
 
         @Override
@@ -86,12 +84,12 @@ public class AsignacionColaborador {
             if (!(otro instanceof Clave c)) {
                 return false;
             }
-            return Objects.equals(idObra, c.idObra) && Objects.equals(idColaborador, c.idColaborador);
+            return Objects.equals(idObra, c.idObra) && rubro == c.rubro;
         }
 
         @Override
         public int hashCode() {
-            return Objects.hash(idObra, idColaborador);
+            return Objects.hash(idObra, rubro);
         }
     }
 }

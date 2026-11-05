@@ -51,6 +51,10 @@ public class Comprobante {
         this.pago = pago;
     }
 
+    public Long getId() {
+        return id;
+    }
+
     public String getUrl() {
         return url;
     }

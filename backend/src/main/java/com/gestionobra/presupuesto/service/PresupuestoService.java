@@ -35,7 +35,7 @@ public class PresupuestoService {
 
     /** Los campos que un perfil no debe ver van vacíos: el estado y el responsable para el cliente. */
     public record ItemVista(Long id, TipoItem tipo, Rubro rubro, BigDecimal monto, EstadoItem estado,
-                            String responsable) {
+                            String responsable, LocalDate fechaActualizacion) {
     }
 
     /** El total va vacío para el colaborador, que solo ve lo de su rubro. */
@@ -196,30 +196,31 @@ public class PresupuestoService {
         if (obra.esCliente(sesion.id())) {
             return presupuesto.visibleParaCliente() ? Optional.of(vistaCliente(presupuesto)) : Optional.empty();
         }
-        return Optional.of(vistaColaborador(presupuesto, obra.rubroDe(sesion.id()).orElse(null)));
+        return Optional.of(vistaColaborador(presupuesto, obra.rubrosDe(sesion.id())));
+    }
+
+    private ItemVista vistaCompleta(ItemDePresupuesto item) {
+        return new ItemVista(item.getId(), item.getTipo(), item.getNombreRubro(), item.getMonto(),
+            item.getEstado(), nombreResponsable(item), item.getFechaActualizacion());
     }
 
     private PresupuestoVista vistaArquitecto(Presupuesto presupuesto) {
-        List<ItemVista> items = itemsOrdenados(presupuesto).stream()
-            .map(item -> new ItemVista(item.getId(), item.getTipo(), item.getNombreRubro(), item.getMonto(),
-                item.getEstado(), nombreResponsable(item)))
-            .toList();
+        List<ItemVista> items = itemsOrdenados(presupuesto).stream().map(this::vistaCompleta).toList();
         return vista(presupuesto, presupuesto.getMotivoRechazo(), items, presupuesto.calcularMontoTotal());
     }
 
     private PresupuestoVista vistaCliente(Presupuesto presupuesto) {
         List<ItemVista> items = itemsOrdenados(presupuesto).stream()
             .map(item -> new ItemVista(item.getId(), item.getTipo(), item.getNombreRubro(), item.getMonto(),
-                null, null))
+                null, null, null))
             .toList();
         return vista(presupuesto, presupuesto.getMotivoRechazo(), items, presupuesto.calcularMontoTotal());
     }
 
-    private PresupuestoVista vistaColaborador(Presupuesto presupuesto, Rubro rubro) {
+    private PresupuestoVista vistaColaborador(Presupuesto presupuesto, List<Rubro> rubros) {
         List<ItemVista> items = itemsOrdenados(presupuesto).stream()
-            .filter(item -> item.getNombreRubro() != null && item.getNombreRubro() == rubro)
-            .map(item -> new ItemVista(item.getId(), item.getTipo(), item.getNombreRubro(), item.getMonto(),
-                item.getEstado(), nombreResponsable(item)))
+            .filter(item -> rubros.contains(item.getNombreRubro()))
+            .map(this::vistaCompleta)
             .toList();
         return vista(presupuesto, null, items, null);
     }

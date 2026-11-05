@@ -22,11 +22,13 @@ import com.gestionobra.usuario.service.UsuarioSesion;
 
 /**
  * Comparación entre lo presupuestado y lo gastado (HU-11). Se calcula en cada consulta a partir
- * de los pagos vigentes, así que siempre está al día. Por ahora los honorarios no participan.
+ * de los pagos vigentes, así que siempre está al día. Los honorarios no reciben pagos: figuran
+ * con el gasto igual a lo presupuestado, sin desvío, y forman parte de los totales.
  */
 @Service
 public class ComparacionService {
 
+    /** El rubro va vacío en la fila de honorarios. */
     public record FilaComparacion(Long idItem, Rubro rubro, BigDecimal presupuestado, BigDecimal gastoReal,
                                   BigDecimal diferencia, BigDecimal porcentaje, NivelDesvio nivel) {
     }
@@ -60,7 +62,11 @@ public class ComparacionService {
         Presupuesto presupuesto = aprobado.get();
         BigDecimal umbral = presupuesto.getUmbralDesvio();
         Map<Long, BigDecimal> gastos = gastosPorItem(presupuesto);
-        List<FilaComparacion> filas = rubros(presupuesto).stream()
+        // De mayor a menor desvío, con los honorarios siempre al final.
+        List<FilaComparacion> filas = presupuesto.getItems().stream()
+            .sorted(Comparator.comparing(ItemDePresupuesto::esHonorarios)
+                .thenComparing(item -> desvioDe(item, gastos).porcentaje(), Comparator.reverseOrder())
+                .thenComparing(ItemDePresupuesto::getNombreRubro, Comparator.nullsLast(Comparator.naturalOrder())))
             .map(item -> {
                 Desvio desvio = desvioDe(item, gastos);
                 return new FilaComparacion(item.getId(), item.getNombreRubro(), desvio.presupuestado(),
@@ -93,14 +99,14 @@ public class ComparacionService {
     }
 
     Desvio desvioDe(ItemDePresupuesto item, Map<Long, BigDecimal> gastos) {
+        if (item.esHonorarios()) {
+            return new Desvio(item.getMonto(), item.getMonto());
+        }
         return new Desvio(item.getMonto(), gastos.getOrDefault(item.getId(), BigDecimal.ZERO));
     }
 
     Desvio desvioTotal(Presupuesto presupuesto, Map<Long, BigDecimal> gastos) {
-        BigDecimal presupuestado = rubros(presupuesto).stream()
-            .map(ItemDePresupuesto::getMonto)
-            .reduce(BigDecimal.ZERO, BigDecimal::add);
-        BigDecimal gastoReal = gastos.values().stream().reduce(BigDecimal.ZERO, BigDecimal::add);
-        return new Desvio(presupuestado, gastoReal);
+        BigDecimal pagos = gastos.values().stream().reduce(BigDecimal.ZERO, BigDecimal::add);
+        return new Desvio(presupuesto.calcularMontoTotal(), pagos.add(presupuesto.montoHonorarios()));
     }
 }

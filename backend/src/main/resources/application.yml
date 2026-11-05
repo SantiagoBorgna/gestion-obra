@@ -39,7 +39,8 @@ spring:
   servlet:
     multipart:
       max-file-size: 10MB
-      max-request-size: 12MB
+      # Hasta 5 comprobantes de 10 MB cada uno
+      max-request-size: 52MB
 
 app:
   url: ${APP_URL:http://localhost:3000}

@@ -47,7 +47,7 @@ export default function PresupuestoObra() {
           </p>
         )}
         {obra && presupuesto && obra.esArquitecto && (
-          <VistaArquitecto idObra={idObra} presupuesto={presupuesto} tareas={tareas} alCambiar={setPresupuesto} />
+          <VistaArquitecto idObra={idObra} presupuesto={presupuesto} tareas={tareas} alCambiar={setPresupuesto} alRecargar={recargar} />
         )}
         {obra && presupuesto && !obra.esArquitecto && esCliente && (
           <VistaCliente idObra={idObra} presupuesto={presupuesto} alCambiar={setPresupuesto} />

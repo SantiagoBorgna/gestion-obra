@@ -17,6 +17,7 @@ import jakarta.persistence.Id;
 import jakarta.persistence.JoinColumn;
 import jakarta.persistence.ManyToOne;
 import jakarta.persistence.OneToMany;
+import jakarta.persistence.OrderBy;
 import jakarta.persistence.Table;
 
 import com.gestionobra.comun.ErrorNegocio;
@@ -65,6 +66,7 @@ public class Pago {
     private ItemDePresupuesto item;
 
     @OneToMany(mappedBy = "pago", cascade = CascadeType.ALL, orphanRemoval = true)
+    @OrderBy("id")
     private List<Comprobante> comprobantes = new ArrayList<>();
 
     protected Pago() {

@@ -1,6 +1,7 @@
 package com.gestionobra.pago.service;
 
 import java.util.Arrays;
+import java.util.List;
 
 import org.springframework.stereotype.Component;
 import org.springframework.web.multipart.MultipartFile;
@@ -17,18 +18,27 @@ public class ValidadorComprobante {
     public record TipoArchivo(String tipoContenido, String extension) {
     }
 
+    private static final int CANTIDAD_MAXIMA = 5;
     private static final long TAMANIO_MAXIMO = 10L * 1024 * 1024;
     private static final byte[] FIRMA_PDF = {'%', 'P', 'D', 'F', '-'};
     private static final byte[] FIRMA_JPG = {(byte) 0xFF, (byte) 0xD8, (byte) 0xFF};
     private static final byte[] FIRMA_PNG = {(byte) 0x89, 'P', 'N', 'G', 0x0D, 0x0A, 0x1A, 0x0A};
 
-    public void validarPresencia(MultipartFile archivo) {
-        if (archivo == null || archivo.isEmpty()) {
-            throw ErrorNegocio.invalido("Adjuntá el comprobante.");
+    /** Devuelve los archivos que traen contenido, después de controlar la cantidad y el tamaño. */
+    public List<MultipartFile> validarPresencia(List<MultipartFile> archivos) {
+        List<MultipartFile> conContenido = archivos == null
+            ? List.of()
+            : archivos.stream().filter(archivo -> !archivo.isEmpty()).toList();
+        if (conContenido.isEmpty()) {
+            throw ErrorNegocio.invalido("Adjuntá al menos un comprobante.");
         }
-        if (archivo.getSize() > TAMANIO_MAXIMO) {
-            throw ErrorNegocio.invalido("El comprobante puede pesar como máximo 10 MB.");
+        if (conContenido.size() > CANTIDAD_MAXIMA) {
+            throw ErrorNegocio.invalido("Podés adjuntar hasta " + CANTIDAD_MAXIMA + " comprobantes.");
         }
+        if (conContenido.stream().anyMatch(archivo -> archivo.getSize() > TAMANIO_MAXIMO)) {
+            throw ErrorNegocio.invalido("Cada comprobante puede pesar como máximo 10 MB.");
+        }
+        return conContenido;
     }
 
     public TipoArchivo identificar(byte[] contenido) {

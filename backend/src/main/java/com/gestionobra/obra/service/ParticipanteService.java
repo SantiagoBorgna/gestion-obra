@@ -39,11 +39,10 @@ public class ParticipanteService {
         });
 
         Usuario usuario = usuarios.obtenerOCrear(email, nombreCompleto, rol);
-        if (obra.participa(usuario.getId())) {
-            throw ErrorNegocio.conflicto("Esa persona ya participa de la obra.");
-        }
+        // Si ya participa con otro rubro y tiene la invitación pendiente, se conserva el enlace que recibió.
+        boolean yaParticipaba = obra.participa(usuario.getId());
         obra.agregarColaborador(usuario, rubro);
-        if (!usuario.tieneClave()) {
+        if (!usuario.tieneClave() && !yaParticipaba) {
             invitaciones.enviarInvitacion(usuario, obra.getTitulo());
         }
         return ObraService.Participante.de(usuario, rubro);

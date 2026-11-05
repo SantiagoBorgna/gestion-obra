@@ -38,6 +38,9 @@ export async function api(ruta, { metodo = 'GET', datos } = {}) {
     // Nginx responde en HTML cuando corta un pedido, por ejemplo si el archivo es demasiado grande.
     if (respuesta.ok) throw new ErrorApi(respuesta.status, 'La respuesta del servidor no es válida.');
   }
+  if (respuesta.status === 413) {
+    throw new ErrorApi(413, 'Los archivos son demasiado grandes.');
+  }
   if (!respuesta.ok) {
     throw new ErrorApi(respuesta.status, cuerpo?.mensaje ?? 'Ocurrió un error inesperado.');
   }

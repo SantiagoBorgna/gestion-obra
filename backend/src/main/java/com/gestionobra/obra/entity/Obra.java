@@ -96,12 +96,13 @@ public class Obra {
         return cliente.getId().equals(idUsuario);
     }
 
-    /** Rubro que tiene a cargo el colaborador en esta obra. */
-    public Optional<Rubro> rubroDe(Long idUsuario) {
+    /** Rubros que tiene a cargo el colaborador en esta obra. */
+    public List<Rubro> rubrosDe(Long idUsuario) {
         return asignaciones.stream()
             .filter(a -> a.getColaborador().getId().equals(idUsuario))
             .map(AsignacionColaborador::getRubro)
-            .findFirst();
+            .sorted()
+            .toList();
     }
 
     /** Colaborador responsable del rubro en esta obra. */

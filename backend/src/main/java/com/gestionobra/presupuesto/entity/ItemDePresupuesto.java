@@ -1,6 +1,7 @@
 package com.gestionobra.presupuesto.entity;
 
 import java.math.BigDecimal;
+import java.time.LocalDate;
 
 import jakarta.persistence.Column;
 import jakarta.persistence.Entity;
@@ -42,6 +43,9 @@ public class ItemDePresupuesto {
     @Column(nullable = false)
     private EstadoItem estado;
 
+    @Column(name = "fecha_actualizacion")
+    private LocalDate fechaActualizacion;
+
     @ManyToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "id_presupuesto")
     private Presupuesto presupuesto;
@@ -69,21 +73,28 @@ public class ItemDePresupuesto {
     /** Los honorarios los carga el propio arquitecto, así que no necesitan confirmación. */
     static ItemDePresupuesto deHonorarios(Presupuesto presupuesto, BigDecimal monto) {
         ItemDePresupuesto item = new ItemDePresupuesto(presupuesto, TipoItem.HONORARIOS, EstadoItem.CONFIRMADO);
-        item.monto = monto;
+        item.cambiarMontoHonorarios(monto);
         return item;
     }
 
     /**
-     * El monto del rubro es la suma de sus tareas. Cualquier cambio de costo lo deja
-     * pendiente, aunque ya estuviera confirmado, para que el arquitecto lo revise de nuevo.
+     * El monto del rubro es la suma de sus tareas. Si el cambio lo hace el colaborador, el rubro queda
+     * pendiente aunque ya estuviera confirmado, para que el arquitecto lo revise de nuevo. Si lo hace
+     * el arquitecto, queda confirmado, porque él es quien lo revisa.
      */
-    public void actualizarMonto(BigDecimal suma, boolean todasLasTareasCargadas) {
+    public void actualizarMonto(BigDecimal suma, boolean todasLasTareasCargadas, boolean cargadoPorArquitecto) {
         this.monto = suma;
-        this.estado = todasLasTareasCargadas ? EstadoItem.PENDIENTE_CONFIRMACION : EstadoItem.SIN_CARGAR;
+        this.fechaActualizacion = LocalDate.now();
+        if (!todasLasTareasCargadas) {
+            this.estado = EstadoItem.SIN_CARGAR;
+        } else {
+            this.estado = cargadoPorArquitecto ? EstadoItem.CONFIRMADO : EstadoItem.PENDIENTE_CONFIRMACION;
+        }
     }
 
     void cambiarMontoHonorarios(BigDecimal monto) {
         this.monto = monto;
+        this.fechaActualizacion = LocalDate.now();
     }
 
     public void confirmar() {
@@ -91,6 +102,7 @@ public class ItemDePresupuesto {
             throw ErrorNegocio.conflicto("Este rubro no está pendiente de confirmación.");
         }
         this.estado = EstadoItem.CONFIRMADO;
+        this.fechaActualizacion = LocalDate.now();
     }
 
     public boolean esRubro() {
@@ -123,6 +135,10 @@ public class ItemDePresupuesto {
 
     public EstadoItem getEstado() {
         return estado;
+    }
+
+    public LocalDate getFechaActualizacion() {
+        return fechaActualizacion;
     }
 
     public Usuario getColaboradorResponsable() {

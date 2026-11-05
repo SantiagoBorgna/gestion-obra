@@ -3,6 +3,7 @@ package com.gestionobra.pago.controller;
 import java.math.BigDecimal;
 import java.nio.charset.StandardCharsets;
 import java.time.LocalDate;
+import java.util.List;
 
 import jakarta.validation.Valid;
 import jakarta.validation.constraints.DecimalMin;
@@ -74,10 +75,10 @@ public class PagoController {
     @ResponseStatus(HttpStatus.CREATED)
     public PagoService.PagoVista registrar(@PathVariable Long idObra,
                                            @Valid @ModelAttribute RegistrarPagoRequest datos,
-                                           @RequestParam(name = "archivo", required = false) MultipartFile archivo,
+                                           @RequestParam(name = "archivos", required = false) List<MultipartFile> archivos,
                                            @AuthenticationPrincipal UsuarioSesion sesion) {
         return pagos.registrar(idObra, datos.tipo(), datos.idItem(), datos.fecha(), datos.monto(),
-            datos.descripcion(), archivo, sesion);
+            datos.descripcion(), archivos, sesion);
     }
 
     @PostMapping("/{idPago}/anular")
@@ -88,10 +89,11 @@ public class PagoController {
     }
 
     /** Se abre en el navegador; el tipo sale del contenido real del archivo, no de lo que informó quien lo subió. */
-    @GetMapping("/{idPago}/comprobante")
+    @GetMapping("/{idPago}/comprobantes/{idComprobante}")
     public ResponseEntity<Resource> comprobante(@PathVariable Long idObra, @PathVariable Long idPago,
+                                                @PathVariable Long idComprobante,
                                                 @AuthenticationPrincipal UsuarioSesion sesion) {
-        PagoService.ArchivoComprobante archivo = pagos.obtenerComprobante(idObra, idPago, sesion);
+        PagoService.ArchivoComprobante archivo = pagos.obtenerComprobante(idObra, idPago, idComprobante, sesion);
         ContentDisposition disposicion = ContentDisposition.inline()
             .filename(archivo.nombre(), StandardCharsets.UTF_8)
             .build();

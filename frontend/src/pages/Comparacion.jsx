@@ -50,7 +50,7 @@ export default function Comparacion() {
               return (
                 <div key={fila.idItem} className="tarjeta">
                   <div className="tarjeta-fila">
-                    <strong>{RUBROS[fila.rubro]}</strong>
+                    <strong>{fila.rubro ? RUBROS[fila.rubro] : 'Honorarios del arquitecto'}</strong>
                     <strong className={COLOR_NIVEL[fila.nivel]}>{formatearDiferencia(fila)}</strong>
                   </div>
                   <FilaBarra titulo="Presup." monto={fila.presupuestado} maximo={maximo} />

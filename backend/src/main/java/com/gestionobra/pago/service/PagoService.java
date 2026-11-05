@@ -39,9 +39,12 @@ import com.gestionobra.usuario.service.UsuarioSesion;
 @Service
 public class PagoService {
 
+    public record ComprobanteVista(Long id, String nombre) {
+    }
+
     public record PagoVista(Long id, LocalDate fecha, BigDecimal monto, String descripcion, TipoPago tipo,
                             EstadoPago estado, String motivoAnulacion, LocalDate fechaAnulacion, Rubro rubro,
-                            String colaborador, String nombreComprobante) {
+                            String colaborador, List<ComprobanteVista> comprobantes) {
     }
 
     /** Rubro al que el arquitecto puede imputar un pago; el colaborador sale del responsable. */
@@ -95,18 +98,18 @@ public class PagoService {
 
     @Transactional
     public PagoVista registrar(Long idObra, TipoPago tipo, Long idItem, LocalDate fecha, BigDecimal monto,
-                               String descripcion, MultipartFile archivo, UsuarioSesion sesion) {
+                               String descripcion, List<MultipartFile> archivos, UsuarioSesion sesion) {
         Obra obra = obras.obraDelArquitecto(idObra, sesion);
         Presupuesto presupuesto = presupuestos.findByObraId(idObra)
             .filter(this::estaAprobado)
             .orElseThrow(() -> ErrorNegocio.conflicto(
                 "Los cobros y pagos se habilitan cuando el cliente aprueba el presupuesto."));
-        validador.validarPresencia(archivo);
+        List<MultipartFile> comprobantes = validador.validarPresencia(archivos);
 
         Pago pago = tipo == TipoPago.INGRESO
             ? Pago.cobro(obra, fecha, monto, descripcion.trim())
             : Pago.egreso(itemDeRubro(presupuesto, idItem), fecha, monto, descripcion.trim());
-        pago.registrarComprobante(guardarComprobante(archivo));
+        guardarComprobantes(comprobantes).forEach(pago::registrarComprobante);
         Pago guardado = pagos.save(pago);
         if (!guardado.esCobro()) {
             alertas.revisar(obra, presupuesto);
@@ -126,13 +129,13 @@ public class PagoService {
     }
 
     @Transactional(readOnly = true)
-    public ArchivoComprobante obtenerComprobante(Long idObra, Long idPago, UsuarioSesion sesion) {
+    public ArchivoComprobante obtenerComprobante(Long idObra, Long idPago, Long idComprobante, UsuarioSesion sesion) {
         Obra obra = obras.obraAccesible(idObra, sesion);
         Comprobante comprobante = movimientosDeObra(obra).stream()
             .filter(p -> p.getId().equals(idPago))
             .filter(visiblePara(obra, sesion.id()))
             .findFirst()
-            .flatMap(p -> p.getComprobantes().stream().findFirst())
+            .flatMap(p -> p.getComprobantes().stream().filter(c -> c.getId().equals(idComprobante)).findFirst())
             .orElseThrow(() -> ErrorNegocio.noEncontrado("No se encontró el comprobante."));
         return new ArchivoComprobante(almacenamiento.leer(comprobante.getUrl()), comprobante.getNombreOriginal(),
             comprobante.getTipoContenido());
@@ -147,12 +150,7 @@ public class PagoService {
 
         if (obra.esArquitecto(idUsuario)) {
             BigDecimal totalPagado = sumarVigentes(egresos);
-            BigDecimal honorarios = presupuesto.getItems().stream()
-                .filter(ItemDePresupuesto::esHonorarios)
-                .map(ItemDePresupuesto::getMonto)
-                .findFirst()
-                .orElse(BigDecimal.ZERO);
-            Resumen resumen = new Resumen(totalPresupuesto, honorarios, totalCobrado, porCobrar, totalPagado,
+            Resumen resumen = new Resumen(totalPresupuesto, presupuesto.montoHonorarios(), totalCobrado, porCobrar, totalPagado,
                 totalCobrado.subtract(totalPagado));
             return new MovimientosVista(true, resumen, vistas(cobros), vistas(egresos),
                 rubros(presupuesto, egresos));
@@ -200,13 +198,24 @@ public class PagoService {
             .orElseThrow(() -> ErrorNegocio.invalido("Elegí un rubro de esta obra."));
     }
 
-    private Comprobante guardarComprobante(MultipartFile archivo) {
+    /** Primero controla el tipo de todos, para no dejar guardados archivos de un pedido que se va a rechazar. */
+    private List<Comprobante> guardarComprobantes(List<MultipartFile> archivos) {
         try {
-            byte[] contenido = archivo.getBytes();
-            ValidadorComprobante.TipoArchivo tipo = validador.identificar(contenido);
-            String clave = almacenamiento.guardar(contenido, tipo.extension());
-            return new Comprobante(clave, LocalDate.now(), nombreOriginal(archivo, tipo.extension()),
-                tipo.tipoContenido());
+            List<byte[]> contenidos = new ArrayList<>();
+            List<ValidadorComprobante.TipoArchivo> tipos = new ArrayList<>();
+            for (MultipartFile archivo : archivos) {
+                byte[] contenido = archivo.getBytes();
+                tipos.add(validador.identificar(contenido));
+                contenidos.add(contenido);
+            }
+            List<Comprobante> comprobantes = new ArrayList<>();
+            for (int i = 0; i < archivos.size(); i++) {
+                ValidadorComprobante.TipoArchivo tipo = tipos.get(i);
+                String clave = almacenamiento.guardar(contenidos.get(i), tipo.extension());
+                comprobantes.add(new Comprobante(clave, LocalDate.now(),
+                    nombreOriginal(archivos.get(i), tipo.extension()), tipo.tipoContenido()));
+            }
+            return comprobantes;
         } catch (IOException e) {
             throw new UncheckedIOException("No se pudo leer el comprobante", e);
         }
@@ -241,14 +250,13 @@ public class PagoService {
 
     private PagoVista vista(Pago pago) {
         ItemDePresupuesto item = pago.getItem();
-        String nombreComprobante = pago.getComprobantes().stream()
-            .findFirst()
-            .map(Comprobante::getNombreOriginal)
-            .orElse(null);
+        List<ComprobanteVista> comprobantes = pago.getComprobantes().stream()
+            .map(comprobante -> new ComprobanteVista(comprobante.getId(), comprobante.getNombreOriginal()))
+            .toList();
         return new PagoVista(pago.getId(), pago.getFecha(), pago.getMonto(), pago.getDescripcion(), pago.getTipo(),
             pago.getEstado(), pago.getMotivoAnulacion(), pago.getFechaAnulacion(),
             item == null ? null : item.getNombreRubro(),
             item == null ? null : item.getColaboradorResponsable().getNombreCompleto(),
-            nombreComprobante);
+            comprobantes);
     }
 }
