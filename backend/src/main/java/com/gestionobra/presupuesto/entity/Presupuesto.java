@@ -50,6 +50,10 @@ public class Presupuesto {
     @Column(name = "motivo_rechazo")
     private String motivoRechazo;
 
+    /** Porcentaje de desvío a partir del cual se genera una alerta. */
+    @Column(name = "umbral_desvio", nullable = false)
+    private BigDecimal umbralDesvio = BigDecimal.TEN;
+
     @OneToOne(fetch = FetchType.LAZY, optional = false)
     @JoinColumn(name = "id_obra")
     private Obra obra;
@@ -127,6 +131,14 @@ public class Presupuesto {
         return estado == EstadoPresupuesto.PRESENTADO
             || estado == EstadoPresupuesto.APROBADO
             || estado == EstadoPresupuesto.RECHAZADO;
+    }
+
+    public void cambiarUmbral(BigDecimal umbral) {
+        this.umbralDesvio = umbral;
+    }
+
+    public BigDecimal getUmbralDesvio() {
+        return umbralDesvio;
     }
 
     public Optional<ItemDePresupuesto> itemDeRubro(Rubro rubro) {

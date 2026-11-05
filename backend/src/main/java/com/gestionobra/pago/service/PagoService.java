@@ -15,6 +15,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+import com.gestionobra.alerta.service.AlertaService;
 import com.gestionobra.comun.AlmacenamientoArchivos;
 import com.gestionobra.comun.ErrorNegocio;
 import com.gestionobra.obra.entity.Obra;
@@ -69,9 +70,12 @@ public class PagoService {
     private final ObraService obras;
     private final AlmacenamientoArchivos almacenamiento;
     private final ValidadorComprobante validador;
+    private final AlertaService alertas;
 
     public PagoService(PagoRepository pagos, PresupuestoRepository presupuestos, ObraService obras,
-                       AlmacenamientoArchivos almacenamiento, ValidadorComprobante validador) {
+                       AlmacenamientoArchivos almacenamiento, ValidadorComprobante validador,
+                       AlertaService alertas) {
+        this.alertas = alertas;
         this.pagos = pagos;
         this.presupuestos = presupuestos;
         this.obras = obras;
@@ -103,7 +107,11 @@ public class PagoService {
             ? Pago.cobro(obra, fecha, monto, descripcion.trim())
             : Pago.egreso(itemDeRubro(presupuesto, idItem), fecha, monto, descripcion.trim());
         pago.registrarComprobante(guardarComprobante(archivo));
-        return vista(pagos.save(pago));
+        Pago guardado = pagos.save(pago);
+        if (!guardado.esCobro()) {
+            alertas.revisar(obra, presupuesto);
+        }
+        return vista(guardado);
     }
 
     @Transactional
