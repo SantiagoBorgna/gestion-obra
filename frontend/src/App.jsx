@@ -9,6 +9,8 @@ import DetalleObra from './pages/DetalleObra.jsx';
 import Relevamiento from './pages/Relevamiento.jsx';
 import PresupuestoObra from './pages/PresupuestoObra.jsx';
 import CobrosYPagos from './pages/CobrosYPagos.jsx';
+import Comparacion from './pages/Comparacion.jsx';
+import Alertas from './pages/Alertas.jsx';
 import Estado from './pages/Estado.jsx';
 
 export default function App() {
@@ -25,6 +27,8 @@ export default function App() {
         <Route path="/obras/:idObra/relevamiento" element={<RutaPrivada><Relevamiento /></RutaPrivada>} />
         <Route path="/obras/:idObra/presupuesto" element={<RutaPrivada><PresupuestoObra /></RutaPrivada>} />
         <Route path="/obras/:idObra/pagos" element={<RutaPrivada><CobrosYPagos /></RutaPrivada>} />
+        <Route path="/obras/:idObra/comparacion" element={<RutaPrivada><Comparacion /></RutaPrivada>} />
+        <Route path="/obras/:idObra/alertas" element={<RutaPrivada><Alertas /></RutaPrivada>} />
         <Route path="*" element={<Navigate to="/obras" replace />} />
       </Routes>
     </SesionProvider>

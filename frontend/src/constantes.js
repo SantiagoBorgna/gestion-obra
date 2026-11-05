@@ -60,6 +60,28 @@ export function formatearMonto(monto) {
   return monto === null || monto === undefined ? '—' : FORMATO_MONTO.format(monto);
 }
 
+/** Clase de color del texto según el nivel de desvío. */
+export const COLOR_NIVEL = {
+  SIN_DESVIO: 'texto-verde',
+  BAJO: 'texto-secundario',
+  MODERADO: 'texto-ambar',
+  ALTO: 'texto-error',
+};
+
+const FORMATO_PORCENTAJE = new Intl.NumberFormat('es-AR', { maximumFractionDigits: 2 });
+
+/** "17,3 %"; con signo, "+17,3 %". */
+export function formatearPorcentaje(valor, conSigno = false) {
+  const signo = conSigno && valor > 0 ? '+' : '';
+  return `${signo}${FORMATO_PORCENTAJE.format(valor)} %`;
+}
+
+/** "+$ 170.000,00 · +17,3 %", a partir de un objeto con diferencia y porcentaje. */
+export function formatearDiferencia({ diferencia, porcentaje }) {
+  const signo = diferencia > 0 ? '+' : '';
+  return `${signo}${formatearMonto(diferencia)} · ${formatearPorcentaje(porcentaje, true)}`;
+}
+
 /** Convierte "2026-11-10" en "10/11/2026" sin pasar por zonas horarias. */
 export function formatearFecha(iso) {
   if (!iso) return '';

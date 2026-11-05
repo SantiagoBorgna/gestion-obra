@@ -229,3 +229,17 @@ p { margin: 0; }
 .monto-anulado { text-decoration: line-through; color: var(--texto-suave); }
 .fila-saldo { margin-top: 6px; padding-top: 8px; border-top: 1px solid var(--borde); }
 .tarjeta a.boton-chico { text-align: center; }
+
+/* Comparación y alertas */
+.titulo-pantalla { font-size: 22px; }
+.texto-verde { color: var(--verde); }
+.texto-ambar { color: #b07d1f; }
+.fila-tarjetas { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+.fila-barra { display: grid; grid-template-columns: 84px 1fr auto; align-items: center; gap: 8px; font-size: 14px; }
+.barra { height: 8px; border-radius: 4px; background: var(--borde); overflow: hidden; }
+.barra-relleno { height: 100%; background: var(--borde-beige); }
+.barra-SIN_DESVIO { background: var(--verde); }
+.barra-BAJO { background: var(--marron); }
+.barra-MODERADO { background: var(--ambar); }
+.barra-ALTO { background: var(--rojo); }
+.fila-tarjetas .tarjeta { display: flex; flex-direction: column; gap: 4px; }

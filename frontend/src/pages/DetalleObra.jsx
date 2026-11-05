@@ -99,6 +99,19 @@ export default function DetalleObra() {
   );
 }
 
+function AccesoAlertas({ idObra }) {
+  const [activas, setActivas] = useState(null);
+
+  useEffect(() => {
+    api(`/obras/${idObra}/alertas`).then((datos) => setActivas(datos.activas.length)).catch(() => setActivas(null));
+  }, [idObra]);
+
+  const texto = activas === null || activas === 0
+    ? 'Alertas'
+    : `${activas} ${activas === 1 ? 'alerta de desvío activa' : 'alertas de desvío activas'}`;
+  return <Link to={`/obras/${idObra}/alertas`} className={`boton ${activas ? 'boton-peligro' : ''}`}>{texto}</Link>;
+}
+
 // Acceso al presupuesto: según el rol y el estado cambia el texto y a dónde lleva.
 function SeccionPresupuesto({ obra }) {
   const { usuario } = useSesion();
@@ -126,6 +139,12 @@ function SeccionPresupuesto({ obra }) {
           <Link to={`/obras/${obra.id}/pagos`} className="boton">
             {obra.esArquitecto ? 'Cobros y pagos' : esCliente ? 'Ver mis pagos a la obra' : 'Ver mis cobros'}
           </Link>
+        )}
+        {presupuesto.estado === 'APROBADO' && obra.esArquitecto && (
+          <>
+            <Link to={`/obras/${obra.id}/comparacion`} className="boton">Presupuesto y gasto</Link>
+            <AccesoAlertas idObra={obra.id} />
+          </>
         )}
       </>
     );
