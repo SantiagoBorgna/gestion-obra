@@ -64,6 +64,22 @@ services:
     depends_on:
       - backend
 
+  # Opcional: no arranca con "up". Se ejecuta con "docker compose run --rm datos-ejemplo".
+  datos-ejemplo:
+    image: node:20-alpine
+    profiles: ["ejemplo"]
+    command: node /scripts/datos-ejemplo.mjs
+    environment:
+      API_URL: http://backend:8080/api
+      MAILPIT_URL: http://mailpit:8025/api/v1
+      ARQUITECTO_EMAIL: ${ARQUITECTO_EMAIL:-arquitecto@gestionobra.local}
+      ARQUITECTO_CLAVE: ${ARQUITECTO_CLAVE:-obra-demo-local-2026}
+    volumes:
+      - ./scripts:/scripts:ro
+    depends_on:
+      - backend
+      - mailpit
+
 volumes:
   db-data:
   archivos:

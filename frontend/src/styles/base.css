@@ -233,6 +233,7 @@ button { font: inherit; }
   font-size: 14px;
 }
 .banda-diferencia strong { font-size: 15px; }
+.banda-neutra { border-color: var(--borde); background: #f5f3ef; color: var(--texto-secundario); }
 
 /* Listas con separadores, sin tarjeta */
 .fila-lista { padding: 12px 0; border-top: 1px solid var(--borde); display: flex; flex-direction: column; gap: 4px; }

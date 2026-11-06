@@ -17,7 +17,7 @@ public record Desvio(BigDecimal presupuestado, BigDecimal gastoReal) {
         if (presupuestado.signum() == 0) {
             return BigDecimal.ZERO;
         }
-        return diferencia().multiply(CIEN).divide(presupuestado, 2, RoundingMode.HALF_UP);
+        return diferencia().multiply(CIEN).divide(presupuestado, 1, RoundingMode.HALF_UP);
     }
 
     /** Compara sin redondear, para que un 10,001 % supere un umbral del 10 %. */

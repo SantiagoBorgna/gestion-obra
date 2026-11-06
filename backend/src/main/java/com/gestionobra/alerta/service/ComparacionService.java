@@ -62,10 +62,10 @@ public class ComparacionService {
         Presupuesto presupuesto = aprobado.get();
         BigDecimal umbral = presupuesto.getUmbralDesvio();
         Map<Long, BigDecimal> gastos = gastosPorItem(presupuesto);
-        // De mayor a menor desvío, con los honorarios siempre al final.
+        // De mayor a menor desvío. Con el mismo desvío, los honorarios van después de los rubros.
         List<FilaComparacion> filas = presupuesto.getItems().stream()
-            .sorted(Comparator.comparing(ItemDePresupuesto::esHonorarios)
-                .thenComparing(item -> desvioDe(item, gastos).porcentaje(), Comparator.reverseOrder())
+            .sorted(Comparator.comparing((ItemDePresupuesto item) -> desvioDe(item, gastos).porcentaje(), Comparator.reverseOrder())
+                .thenComparing(ItemDePresupuesto::esHonorarios)
                 .thenComparing(ItemDePresupuesto::getNombreRubro, Comparator.nullsLast(Comparator.naturalOrder())))
             .map(item -> {
                 Desvio desvio = desvioDe(item, gastos);

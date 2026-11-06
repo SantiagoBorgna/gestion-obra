@@ -58,7 +58,7 @@ export function formatearMonto(monto) {
   const decimales = Number.isInteger(Number(monto)) ? 0 : 2;
   const formato = new Intl.NumberFormat('es-AR', { minimumFractionDigits: decimales, maximumFractionDigits: 2 });
   const texto = `$${formato.format(Math.abs(monto))}`;
-  return Number(monto) < 0 ? `-${texto}` : texto;
+  return Number(monto) < 0 ? `−${texto}` : texto;
 }
 
 /** Clase de color del texto según el nivel de desvío. */
@@ -73,7 +73,7 @@ export const COLOR_NIVEL = {
 export function formatearPorcentaje(valor, conSigno = false) {
   const numero = Number(valor);
   const texto = Number.isInteger(numero) ? String(numero) : numero.toFixed(1);
-  return `${conSigno && numero > 0 ? '+' : ''}${texto}%`;
+  return `${conSigno && numero > 0 ? '+' : ''}${texto.replace('-', '−')}%`;
 }
 
 /** "+$170.000 · +17.3%", a partir de un objeto con diferencia y porcentaje. */

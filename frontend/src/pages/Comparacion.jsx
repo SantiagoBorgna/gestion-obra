@@ -39,7 +39,7 @@ export default function Comparacion() {
                 <span className="dato-valor">{formatearMonto(totales.gastoReal)}</span>
               </div>
             </div>
-            <div className="banda-diferencia">
+            <div className={`banda-diferencia ${Number(totales.diferencia) > 0 ? '' : 'banda-neutra'}`}>
               <span>Diferencia total</span>
               <strong>{formatearDiferencia(totales)}</strong>
             </div>
@@ -47,14 +47,16 @@ export default function Comparacion() {
             <h2 className="titulo-seccion seccion">Detalle por rubro</h2>
             {datos.rubros.map((fila) => {
               const maximo = Math.max(fila.presupuestado, fila.gastoReal);
+              // Lo que todavía está por debajo de lo presupuestado no es un logro: va en gris, y el verde queda para el gasto exacto.
+              const color = Number(fila.diferencia) < 0 ? 'BAJO' : fila.nivel;
               return (
                 <div key={fila.idItem} className="tarjeta">
                   <div className="tarjeta-fila">
                     <strong>{fila.rubro ? RUBROS[fila.rubro] : 'Honorarios del arquitecto'}</strong>
-                    <strong className={COLOR_NIVEL[fila.nivel]}>{formatearDiferencia(fila)}</strong>
+                    <strong className={COLOR_NIVEL[color]}>{formatearDiferencia(fila)}</strong>
                   </div>
                   <FilaBarra titulo="Presup." monto={fila.presupuestado} maximo={maximo} />
-                  <FilaBarra titulo="Gastado" monto={fila.gastoReal} maximo={maximo} nivel={fila.nivel} />
+                  <FilaBarra titulo="Gastado" monto={fila.gastoReal} maximo={maximo} nivel={color} />
                 </div>
               );
             })}
