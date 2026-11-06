@@ -2,24 +2,6 @@
 
 Sistema web para arquitectos independientes que trabajan bajo la modalidad llave en mano. Centraliza el presupuesto por rubro, los cobros al cliente, los pagos a colaboradores, la comparación entre presupuesto y gasto real, y las alertas de desvío.
 
-## Alcance de la demo
-
-| Incluido | Historia de usuario |
-|---|---|
-| Alta de obra y registro de participantes | HU-01 |
-| Autenticación | HU-03 |
-| Relevamiento de tareas | HU-04 |
-| Estimación de costos | HU-05 |
-| Consolidación del presupuesto | HU-06 |
-| Presentación y aprobación por el cliente | HU-07 |
-| Cobros al cliente | HU-08 |
-| Pagos a colaboradores | HU-09 |
-| Comparación de presupuesto y gasto | HU-11 |
-| Alertas de desvío | HU-12 |
-| Honorarios del arquitecto | HU-13 |
-
-Quedan fuera de la demo la asociación de usuarios existentes (HU-02), las etapas y la bitácora (HU-10, HU-14 y HU-15) y la finalización de la obra (HU-16). Etapas, Bitácora y Finalizar obra figuran en gris en el menú de la obra.
-
 ## Cómo ejecutarlo
 
 Solo hace falta [Docker Desktop](https://www.docker.com/products/docker-desktop/) abierto. No hay que instalar Java, Node ni PostgreSQL, ni crear un archivo `.env`.
