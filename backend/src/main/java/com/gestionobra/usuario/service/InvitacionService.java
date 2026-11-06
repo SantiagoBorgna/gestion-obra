@@ -1,5 +1,6 @@
 package com.gestionobra.usuario.service;
 
+import java.net.URLEncoder;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
@@ -66,7 +67,8 @@ public class InvitacionService {
             %s
 
             El enlace se puede usar una sola vez y vence en 7 días.
-            """.formatted(usuario.getNombreCompleto(), tituloObra, enlace(token)));
+            """.formatted(usuario.getNombreCompleto(), tituloObra,
+                enlace(token) + "&obra=" + URLEncoder.encode(tituloObra, StandardCharsets.UTF_8)));
     }
 
     @Transactional

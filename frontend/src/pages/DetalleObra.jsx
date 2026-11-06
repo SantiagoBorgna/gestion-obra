@@ -1,227 +1,131 @@
-import { useCallback, useEffect, useState } from 'react';
+import { useEffect, useState } from 'react';
 import { Link, useParams } from 'react-router-dom';
 import BarraSuperior from '../componentes/BarraSuperior.jsx';
-import DialogoConfirmacion from '../componentes/DialogoConfirmacion.jsx';
+import {
+  IconoAlerta, IconoBandera, IconoBarras, IconoBilletes, IconoChevron, IconoDocumento,
+  IconoEscalones, IconoLibro, IconoLista, IconoPersonas, IconoRecibo,
+} from '../componentes/Iconos.jsx';
 import { api } from '../api.js';
-import { COLOR_ESTADO, ESTADOS_OBRA, ESTADOS_PRESUPUESTO, ROLES, RUBROS, formatearFecha } from '../constantes.js';
+import { ESTADOS_OBRA, ESTADOS_PRESUPUESTO, formatearMonto, formatearPorcentaje } from '../constantes.js';
 import { useSesion } from '../sesion/SesionContext.jsx';
 
-const PARTICIPANTE_VACIO = { nombreCompleto: '', email: '', rol: 'ESPECIALISTA', rubro: '' };
-
+// Inicio de la obra: un menú cuyas opciones dependen del rol. Etapas, Bitácora y Finalizar
+// todavía no entran en la demo, así que figuran apagadas.
 export default function DetalleObra() {
   const { idObra } = useParams();
+  const { usuario } = useSesion();
   const [obra, setObra] = useState(null);
+  const [datos, setDatos] = useState({});
   const [error, setError] = useState('');
-  const [aviso, setAviso] = useState('');
-  const [aReenviar, setAReenviar] = useState(null);
-  const [enviando, setEnviando] = useState(false);
 
   useEffect(() => {
-    api(`/obras/${idObra}`).then(setObra).catch((e) => setError(e.message));
+    async function cargar() {
+      const detalle = await api(`/obras/${idObra}`);
+      const presupuesto = await api(`/obras/${idObra}/presupuesto`);
+      const aprobado = presupuesto?.estado === 'APROBADO';
+      const pagos = aprobado ? await api(`/obras/${idObra}/pagos`) : null;
+      const [alertas, comparacion] = detalle.esArquitecto && aprobado
+        ? await Promise.all([api(`/obras/${idObra}/alertas`), api(`/obras/${idObra}/comparacion`)])
+        : [null, null];
+      setObra(detalle);
+      setDatos({ presupuesto, aprobado, pagos, alertas, comparacion });
+    }
+    cargar().catch((e) => setError(e.message));
   }, [idObra]);
 
-  async function reenviar() {
-    const participante = aReenviar;
-    setAviso('');
-    setEnviando(true);
-    try {
-      await api(`/obras/${idObra}/participantes/${participante.id}/reenviar-invitacion`, { metodo: 'POST' });
-      setAviso(`Se envió una invitación nueva a ${participante.email}. El enlace anterior ya no es válido.`);
-    } catch (e) {
-      setAviso(e.message);
-    } finally {
-      setEnviando(false);
-      setAReenviar(null);
-    }
-  }
-
-  const cancelarReenvio = useCallback(() => setAReenviar(null), []);
-
-  function agregado(participante) {
-    setObra({ ...obra, participantes: [...obra.participantes, participante] });
-    setAviso(participante.invitacionPendiente
-      ? `Se agregó a ${participante.nombreCompleto} y se le envió la invitación.`
-      : `Se agregó a ${participante.nombreCompleto}. Ya tenía cuenta, así que puede ingresar directamente.`);
-  }
+  const { presupuesto, aprobado, pagos, alertas, comparacion } = datos;
+  const esArquitecto = obra?.esArquitecto;
+  const esCliente = usuario.rol === 'CLIENTE';
+  const activas = alertas?.activas.length ?? 0;
+  const ruta = (sufijo) => `/obras/${idObra}/${sufijo}`;
 
   return (
     <div className="pantalla">
-      <BarraSuperior titulo={obra?.titulo ?? 'Obra'} volverA="/obras" />
+      <BarraSuperior titulo="Mis obras" volverA="/obras" />
       <main className="contenido">
         {error && <p className="texto-error">{error}</p>}
         {obra && (
           <>
-            <h2 className="titulo-seccion">Datos de la obra</h2>
-            <div className="tarjeta">
-              <div className="tarjeta-fila">
-                <span className="texto-secundario">{obra.ubicacion}</span>
-                <span className={`etiqueta ${obra.estado === 'EN_CURSO' ? 'etiqueta-verde' : ''}`}>{ESTADOS_OBRA[obra.estado]}</span>
-              </div>
-              <p>{obra.descripcion}</p>
-              <span className="texto-suave">Inicio: {formatearFecha(obra.fechaInicio)} · Arquitecto: {obra.arquitecto}</span>
+            <div className="cabecera-pantalla">
+              <h1 className="titulo-pantalla">{obra.titulo}</h1>
+              <span className="estado-obra"><span className="marcador" />{ESTADOS_OBRA[obra.estado]}</span>
+            </div>
+            {obra.cliente && <span className="texto-suave">Cliente: {obra.cliente}</span>}
+
+            {activas > 0 && (
+              <Link to={ruta('alertas')} className="aviso-alertas">
+                <IconoAlerta />
+                <span>{activas === 1 ? '1 alerta de desvío activa' : `${activas} alertas de desvío activas`}</span>
+                <IconoChevron />
+              </Link>
+            )}
+
+            <h2 className="titulo-seccion seccion">Presupuesto</h2>
+            <div className="menu-grupo">
+              {esArquitecto && <FilaMenu icono={<IconoLista />} titulo="Relevamiento" a={ruta('relevamiento')} />}
+              <FilaMenu
+                icono={<IconoDocumento />}
+                titulo={esArquitecto || esCliente ? 'Presupuesto' : 'Estimación de costos'}
+                a={presupuesto ? ruta('presupuesto') : null}
+                valor={presupuesto && (esArquitecto || esCliente) ? ESTADOS_PRESUPUESTO[presupuesto.estado] : null}
+                claseValor={aprobado ? 'texto-verde' : ''}
+              />
             </div>
 
-            <SeccionPresupuesto obra={obra} />
+            <h2 className="titulo-seccion seccion">Ejecución</h2>
+            <div className="menu-grupo">
+              {esArquitecto && <FilaMenu icono={<IconoEscalones />} titulo="Etapas" />}
+              <FilaMenu icono={<IconoLibro />} titulo="Bitácora" />
+              {esArquitecto && (
+                <FilaMenu icono={<IconoPersonas />} titulo="Participantes" a={ruta('participantes')} valor={obra.participantes.length} />
+              )}
+            </div>
 
-            {obra.esArquitecto && <h2 className="titulo-seccion">Participantes</h2>}
-            {aviso && <p className="aviso">{aviso}</p>}
-            {obra.participantes.map((p) => (
-              <div key={`${p.id}-${p.rubro}`} className="tarjeta">
-                <div className="tarjeta-fila">
-                  <strong>{p.nombreCompleto}</strong>
-                  {p.invitacionPendiente && <span className="etiqueta etiqueta-ambar">Invitación pendiente</span>}
-                </div>
-                <span className="texto-secundario">
-                  {[ROLES[p.rol], RUBROS[p.rubro]].filter(Boolean).join(' · ')}
-                </span>
-                {p.email && <span className="texto-suave">{p.email}</span>}
-                {obra.esArquitecto && p.invitacionPendiente && (
-                  <button type="button" className="boton boton-chico" onClick={() => setAReenviar(p)}>Reenviar invitación</button>
-                )}
-              </div>
-            ))}
-
-            {obra.esArquitecto && <FormularioParticipante idObra={idObra} alAgregar={agregado} />}
+            <h2 className="titulo-seccion seccion">Finanzas</h2>
+            <div className="menu-grupo">
+              {(esArquitecto || esCliente) && (
+                <FilaMenu
+                  icono={<IconoBilletes />}
+                  titulo={esArquitecto ? 'Cobros al cliente' : 'Mis pagos'}
+                  a={aprobado ? ruta('cobros') : null}
+                  valor={pagos ? formatearMonto(pagos.resumen.totalCobrado) : null}
+                />
+              )}
+              {!esCliente && (
+                <FilaMenu
+                  icono={<IconoRecibo />}
+                  titulo={esArquitecto ? 'Pagos a colaboradores' : 'Pagos recibidos'}
+                  a={aprobado ? ruta('pagos') : null}
+                  valor={pagos ? formatearMonto(pagos.resumen.totalPagado) : null}
+                />
+              )}
+              {esArquitecto && (
+                <FilaMenu
+                  icono={<IconoBarras />}
+                  titulo="Presupuesto y gasto"
+                  a={aprobado ? ruta('comparacion') : null}
+                  valor={comparacion ? formatearPorcentaje(comparacion.totales.porcentaje, true) : null}
+                  claseValor={comparacion && Number(comparacion.totales.diferencia) > 0 ? 'texto-ambar' : 'texto-verde'}
+                />
+              )}
+              {esArquitecto && <FilaMenu icono={<IconoBandera />} titulo="Finalizar obra" />}
+            </div>
           </>
         )}
       </main>
-      {aReenviar && (
-        <DialogoConfirmacion
-          titulo="Reenviar invitación"
-          mensaje={`El enlace actual de ${aReenviar.email} se va a invalidar. ¿Seguro que querés reenviar la invitación?`}
-          textoConfirmar="Reenviar"
-          enviando={enviando}
-          alConfirmar={reenviar}
-          alCancelar={cancelarReenvio}
-        />
-      )}
     </div>
   );
 }
 
-function AccesoAlertas({ idObra }) {
-  const [activas, setActivas] = useState(null);
-
-  useEffect(() => {
-    api(`/obras/${idObra}/alertas`).then((datos) => setActivas(datos.activas.length)).catch(() => setActivas(null));
-  }, [idObra]);
-
-  const texto = activas === null || activas === 0
-    ? 'Alertas'
-    : `${activas} ${activas === 1 ? 'alerta de desvío activa' : 'alertas de desvío activas'}`;
-  return <Link to={`/obras/${idObra}/alertas`} className={`boton ${activas ? 'boton-peligro' : ''}`}>{texto}</Link>;
-}
-
-// Acceso al presupuesto: según el rol y el estado cambia el texto y a dónde lleva.
-function SeccionPresupuesto({ obra }) {
-  const { usuario } = useSesion();
-  const [presupuesto, setPresupuesto] = useState(undefined);
-
-  useEffect(() => {
-    api(`/obras/${obra.id}/presupuesto`).then(setPresupuesto).catch(() => setPresupuesto(null));
-  }, [obra.id]);
-
-  if (presupuesto === undefined) return null;
-
-  const esCliente = usuario.rol === 'CLIENTE';
-  let contenido;
-  if (presupuesto) {
-    const textoColaborador = presupuesto.estado === 'EN_ESTIMACION' ? 'Cargar costos' : 'Ver costos';
-    const textoBoton = obra.esArquitecto ? 'Ver presupuesto' : esCliente ? 'Revisar presupuesto' : textoColaborador;
-    contenido = (
-      <>
-        <div className="tarjeta-fila">
-          <span className="texto-secundario">Estado</span>
-          <span className={`etiqueta ${COLOR_ESTADO[presupuesto.estado]}`}>{ESTADOS_PRESUPUESTO[presupuesto.estado]}</span>
-        </div>
-        <Link to={`/obras/${obra.id}/presupuesto`} className="boton boton-primario">{textoBoton}</Link>
-        {presupuesto.estado === 'APROBADO' && (
-          <Link to={`/obras/${obra.id}/pagos`} className="boton">
-            {obra.esArquitecto ? 'Cobros y pagos' : esCliente ? 'Ver mis pagos a la obra' : 'Ver mis cobros'}
-          </Link>
-        )}
-        {presupuesto.estado === 'APROBADO' && obra.esArquitecto && (
-          <>
-            <Link to={`/obras/${obra.id}/comparacion`} className="boton">Presupuesto y gasto</Link>
-            <AccesoAlertas idObra={obra.id} />
-          </>
-        )}
-      </>
-    );
-  } else if (obra.esArquitecto) {
-    contenido = (
-      <>
-        <span className="texto-secundario">Cargá las tareas de la obra y solicitá los costos a los colaboradores.</span>
-        <Link to={`/obras/${obra.id}/relevamiento`} className="boton boton-primario">Ir al relevamiento</Link>
-      </>
-    );
-  } else {
-    contenido = (
-      <span className="texto-secundario">
-        {esCliente ? 'El arquitecto todavía no presentó el presupuesto.' : 'Todavía no se solicitaron los costos.'}
-      </span>
-    );
-  }
-
-  return (
+function FilaMenu({ icono, titulo, a, valor, claseValor = '' }) {
+  const contenido = (
     <>
-      <h2 className="titulo-seccion">Presupuesto</h2>
-      <div className="tarjeta acciones-tarjeta">{contenido}</div>
+      <span className="menu-icono">{icono}</span>
+      <span className="menu-titulo">{titulo}</span>
+      {valor !== null && valor !== undefined && <span className={`menu-valor ${claseValor}`}>{valor}</span>}
+      <span className="chevron"><IconoChevron /></span>
     </>
   );
-}
-
-function FormularioParticipante({ idObra, alAgregar }) {
-  const [datos, setDatos] = useState(PARTICIPANTE_VACIO);
-  const [error, setError] = useState('');
-  const [enviando, setEnviando] = useState(false);
-
-  const cambiar = (campo) => (e) => setDatos({ ...datos, [campo]: e.target.value });
-
-  async function enviar(evento) {
-    evento.preventDefault();
-    setError('');
-    setEnviando(true);
-    try {
-      const participante = await api(`/obras/${idObra}/participantes`, { metodo: 'POST', datos });
-      setDatos(PARTICIPANTE_VACIO);
-      alAgregar(participante);
-    } catch (e) {
-      setError(e.message);
-    } finally {
-      setEnviando(false);
-    }
-  }
-
-  return (
-    <form onSubmit={enviar} className="formulario">
-      <h2 className="titulo-seccion">Agregar participante</h2>
-      <label className="campo">
-        <span>Nombre completo</span>
-        <input value={datos.nombreCompleto} onChange={cambiar('nombreCompleto')} maxLength={120} required />
-      </label>
-      <label className="campo">
-        <span>Correo electrónico</span>
-        <input type="email" value={datos.email} onChange={cambiar('email')} required />
-      </label>
-      <label className="campo">
-        <span>Rol</span>
-        <select value={datos.rol} onChange={cambiar('rol')}>
-          <option value="ESPECIALISTA">{ROLES.ESPECIALISTA}</option>
-          <option value="CUADRILLA">{ROLES.CUADRILLA}</option>
-        </select>
-      </label>
-      <label className="campo">
-        <span>Rubro</span>
-        <select value={datos.rubro} onChange={cambiar('rubro')} required>
-          <option value="" disabled>Elegí un rubro</option>
-          {Object.entries(RUBROS).map(([valor, nombre]) => <option key={valor} value={valor}>{nombre}</option>)}
-        </select>
-      </label>
-      {error && <p className="texto-error">{error}</p>}
-      <button type="submit" className="boton boton-primario" disabled={enviando}>
-        {enviando ? 'Agregando…' : 'Agregar y enviar invitación'}
-      </button>
-    </form>
-  );
+  if (!a) return <div className="menu-fila menu-fila-apagada">{contenido}</div>;
+  return <Link to={a} className="menu-fila">{contenido}</Link>;
 }

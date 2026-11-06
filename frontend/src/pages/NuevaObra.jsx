@@ -29,17 +29,18 @@ export default function NuevaObra() {
 
   return (
     <div className="pantalla">
-      <BarraSuperior titulo="Nueva obra" volverA="/obras" />
+      <BarraSuperior titulo="Mis obras" volverA="/obras" />
       <main className="contenido">
+        <h1 className="titulo-pantalla">Nueva obra</h1>
         <form onSubmit={enviar} className="formulario">
           <h2 className="titulo-seccion">Datos de la obra</h2>
           <label className="campo">
             <span>Título</span>
-            <input value={datos.titulo} onChange={cambiar('titulo')} maxLength={150} required />
+            <input placeholder="Casa Barrio General Paz" value={datos.titulo} onChange={cambiar('titulo')} maxLength={150} required />
           </label>
           <label className="campo">
             <span>Ubicación</span>
-            <input value={datos.ubicacion} onChange={cambiar('ubicacion')} maxLength={200} required />
+            <input placeholder="Calle y número, ciudad" value={datos.ubicacion} onChange={cambiar('ubicacion')} maxLength={200} required />
           </label>
           <label className="campo">
             <span>Fecha de inicio</span>
@@ -47,22 +48,21 @@ export default function NuevaObra() {
           </label>
           <label className="campo">
             <span>Descripción</span>
-            <textarea value={datos.descripcion} onChange={cambiar('descripcion')} maxLength={1000} rows={3} required />
+            <textarea placeholder="Vivienda unifamiliar de dos plantas" value={datos.descripcion} onChange={cambiar('descripcion')} maxLength={1000} rows={3} required />
           </label>
 
           <h2 className="titulo-seccion">Cliente</h2>
           <label className="campo">
-            <span>Nombre completo</span>
-            <input value={datos.nombreCliente} onChange={cambiar('nombreCliente')} maxLength={120} required />
+            <span>Correo electrónico</span>
+            <input type="email" placeholder="nombre@correo.com" value={datos.emailCliente} onChange={cambiar('emailCliente')} required />
           </label>
           <label className="campo">
-            <span>Correo electrónico</span>
-            <input type="email" value={datos.emailCliente} onChange={cambiar('emailCliente')} required />
+            <span>Nombre completo</span>
+            <input placeholder="Nombre y apellido" value={datos.nombreCliente} onChange={cambiar('nombreCliente')} maxLength={120} required />
           </label>
-          <p className="texto-suave">Si el cliente todavía no tiene cuenta, le enviamos un enlace para que defina su contraseña.</p>
 
           {error && <p className="texto-error">{error}</p>}
-          <button type="submit" className="boton boton-primario" disabled={enviando}>
+          <button type="submit" className="boton" disabled={enviando}>
             {enviando ? 'Guardando…' : 'Crear obra'}
           </button>
         </form>

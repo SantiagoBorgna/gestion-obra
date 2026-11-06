@@ -42,22 +42,13 @@ export const ESTADOS_ITEM = {
   CONFIRMADO: 'Confirmado',
 };
 
-/** Clase de la etiqueta de color para cada estado de presupuesto o de ítem. */
-export const COLOR_ESTADO = {
-  EN_ESTIMACION: 'etiqueta-ambar',
-  CONSOLIDADO: '',
-  PRESENTADO: 'etiqueta-ambar',
-  APROBADO: 'etiqueta-verde',
-  RECHAZADO: 'etiqueta-rojo',
-  SIN_CARGAR: '',
-  PENDIENTE_CONFIRMACION: 'etiqueta-ambar',
-  CONFIRMADO: 'etiqueta-verde',
-};
-
-const FORMATO_MONTO = new Intl.NumberFormat('es-AR', { style: 'currency', currency: 'ARS' });
-
+/** "$8.000.000", con centavos solo cuando los tiene ("$1.270.000,50"). */
 export function formatearMonto(monto) {
-  return monto === null || monto === undefined ? '—' : FORMATO_MONTO.format(monto);
+  if (monto === null || monto === undefined) return '-';
+  const decimales = Number.isInteger(Number(monto)) ? 0 : 2;
+  const formato = new Intl.NumberFormat('es-AR', { minimumFractionDigits: decimales, maximumFractionDigits: 2 });
+  const texto = `$${formato.format(Math.abs(monto))}`;
+  return Number(monto) < 0 ? `-${texto}` : texto;
 }
 
 /** Clase de color del texto según el nivel de desvío. */
@@ -68,18 +59,24 @@ export const COLOR_NIVEL = {
   ALTO: 'texto-error',
 };
 
-const FORMATO_PORCENTAJE = new Intl.NumberFormat('es-AR', { maximumFractionDigits: 2 });
-
-/** "17,3 %"; con signo, "+17,3 %". */
+/** "17.3%"; con signo, "+17.3%". */
 export function formatearPorcentaje(valor, conSigno = false) {
-  const signo = conSigno && valor > 0 ? '+' : '';
-  return `${signo}${FORMATO_PORCENTAJE.format(valor)} %`;
+  const numero = Number(valor);
+  const texto = Number.isInteger(numero) ? String(numero) : numero.toFixed(1);
+  return `${conSigno && numero > 0 ? '+' : ''}${texto}%`;
 }
 
-/** "+$ 170.000,00 · +17,3 %", a partir de un objeto con diferencia y porcentaje. */
+/** "+$170.000 · +17.3%", a partir de un objeto con diferencia y porcentaje. */
 export function formatearDiferencia({ diferencia, porcentaje }) {
-  const signo = diferencia > 0 ? '+' : '';
+  const signo = Number(diferencia) > 0 ? '+' : '';
   return `${signo}${formatearMonto(diferencia)} · ${formatearPorcentaje(porcentaje, true)}`;
+}
+
+/** "Septiembre 2026" a partir de "2026-09-05". */
+export function formatearMes(iso) {
+  const [anio, mes] = iso.split('-');
+  const nombre = new Date(Number(anio), Number(mes) - 1, 1).toLocaleDateString('es-AR', { month: 'long' });
+  return `${nombre.charAt(0).toUpperCase()}${nombre.slice(1)} ${anio}`;
 }
 
 /** Convierte "2026-11-10" en "10/11/2026" sin pasar por zonas horarias. */

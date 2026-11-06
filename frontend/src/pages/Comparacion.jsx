@@ -4,7 +4,7 @@ import BarraSuperior from '../componentes/BarraSuperior.jsx';
 import { api } from '../api.js';
 import { COLOR_NIVEL, RUBROS, formatearDiferencia, formatearMonto } from '../constantes.js';
 
-// Presupuesto y gasto (HU-11): solo para el arquitecto, rubro por rubro.
+// Presupuesto y gasto (HU-11): solo para el arquitecto, de mayor a menor desvío.
 export default function Comparacion() {
   const { idObra } = useParams();
   const [obra, setObra] = useState(null);
@@ -31,20 +31,20 @@ export default function Comparacion() {
           <>
             <div className="fila-tarjetas">
               <div className="tarjeta">
-                <span className="texto-suave">Presupuestado</span>
-                <strong>{formatearMonto(totales.presupuestado)}</strong>
+                <span className="dato-titulo">Presupuestado</span>
+                <span className="dato-valor">{formatearMonto(totales.presupuestado)}</span>
               </div>
               <div className="tarjeta">
-                <span className="texto-suave">Gastado real</span>
-                <strong>{formatearMonto(totales.gastoReal)}</strong>
+                <span className="dato-titulo">Gastado real</span>
+                <span className="dato-valor">{formatearMonto(totales.gastoReal)}</span>
               </div>
             </div>
-            <div className="aviso tarjeta-fila">
+            <div className="banda-diferencia">
               <span>Diferencia total</span>
               <strong>{formatearDiferencia(totales)}</strong>
             </div>
 
-            <h2 className="titulo-seccion">Detalle por rubro</h2>
+            <h2 className="titulo-seccion seccion">Detalle por rubro</h2>
             {datos.rubros.map((fila) => {
               const maximo = Math.max(fila.presupuestado, fila.gastoReal);
               return (
@@ -65,13 +65,14 @@ export default function Comparacion() {
   );
 }
 
-export function FilaBarra({ titulo, monto, maximo, nivel }) {
+export function FilaBarra({ titulo, monto, maximo, nivel, destacar }) {
   const ancho = maximo > 0 ? (monto / maximo) * 100 : 0;
+  const montoTexto = formatearMonto(monto);
   return (
     <div className="fila-barra">
       <span className="texto-suave">{titulo}</span>
       <div className="barra"><div className={`barra-relleno ${nivel ? `barra-${nivel}` : ''}`} style={{ width: `${ancho}%` }} /></div>
-      <span>{formatearMonto(monto)}</span>
+      <span>{destacar ? <strong>{montoTexto}</strong> : montoTexto}</span>
     </div>
   );
 }

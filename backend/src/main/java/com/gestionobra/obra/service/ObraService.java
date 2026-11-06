@@ -45,8 +45,8 @@ public class ObraService {
     }
 
     public record ObraDetalle(Long id, String titulo, String descripcion, String ubicacion, LocalDate fechaInicio,
-                              LocalDate fechaFin, EstadoObra estado, String arquitecto, boolean esArquitecto,
-                              List<Participante> participantes) {
+                              LocalDate fechaFin, EstadoObra estado, String arquitecto, String cliente,
+                              boolean esArquitecto, List<Participante> participantes) {
     }
 
     private final ObraRepository obras;
@@ -103,8 +103,11 @@ public class ObraService {
     }
 
     private ObraDetalle detalle(Obra obra, UsuarioSesion sesion) {
+        // El colaborador no ve datos del cliente.
+        boolean veCliente = obra.esArquitecto(sesion.id()) || obra.esCliente(sesion.id());
         return new ObraDetalle(obra.getId(), obra.getTitulo(), obra.getDescripcion(), obra.getUbicacion(),
             obra.getFechaInicio(), obra.getFechaFin(), obra.getEstado(), obra.getArquitecto().getNombreCompleto(),
+            veCliente ? obra.getCliente().getNombreCompleto() : null,
             obra.esArquitecto(sesion.id()), participantesVisibles(obra, sesion.id()));
     }
 

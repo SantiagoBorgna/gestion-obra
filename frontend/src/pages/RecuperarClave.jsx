@@ -35,15 +35,15 @@ export default function RecuperarClave() {
   }
 
   return (
-    <PantallaAcceso titulo="Recuperar contraseña">
+    <PantallaAcceso titulo="Recuperá tu contraseña">
       <form onSubmit={enviar} className="formulario">
         <p className="texto-secundario">Ingresá tu correo y te enviamos un enlace para definir una contraseña nueva.</p>
         <label className="campo">
           <span>Correo electrónico</span>
-          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="username" required />
+          <input type="email" placeholder="nombre@correo.com" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="username" required />
         </label>
         {error && <p className="texto-error">{error}</p>}
-        <button type="submit" className="boton boton-primario" disabled={enviando}>
+        <button type="submit" className="boton boton-fuerte" disabled={enviando}>
           {enviando ? 'Enviando…' : 'Enviar enlace'}
         </button>
         <Link to="/login" className="enlace-secundario">Volver a iniciar sesión</Link>

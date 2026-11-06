@@ -1,5 +1,6 @@
 import { useEffect, useState } from 'react';
 import { Link, useSearchParams } from 'react-router-dom';
+import CampoClave from '../componentes/CampoClave.jsx';
 import PantallaAcceso from '../componentes/PantallaAcceso.jsx';
 import { api } from '../api.js';
 
@@ -10,6 +11,7 @@ const LARGO_MAXIMO = 64;
 export default function DefinirClave() {
   const [parametros] = useSearchParams();
   const token = parametros.get('token') ?? '';
+  const obra = parametros.get('obra');
   const [persona, setPersona] = useState(null);
   const [errorEnlace, setErrorEnlace] = useState('');
   const [clave, setClave] = useState('');
@@ -29,11 +31,13 @@ export default function DefinirClave() {
   }, [token]);
 
   const largo = [...clave].length;
+  const largoValido = largo >= LARGO_MINIMO && largo <= LARGO_MAXIMO;
+  const coinciden = clave !== '' && clave === confirmacion;
 
   async function enviar(evento) {
     evento.preventDefault();
     setError('');
-    if (clave !== confirmacion) {
+    if (!coinciden) {
       setError('Las contraseñas no coinciden.');
       return;
     }
@@ -61,37 +65,44 @@ export default function DefinirClave() {
     return (
       <PantallaAcceso titulo="Contraseña guardada">
         <p className="texto-secundario">Ya podés iniciar sesión con tu correo y la contraseña nueva.</p>
-        <Link to="/login" className="boton boton-primario">Iniciar sesión</Link>
+        <Link to="/login" className="boton boton-fuerte">Iniciar sesión</Link>
       </PantallaAcceso>
     );
   }
 
   if (!persona) return <PantallaAcceso><p className="texto-secundario">Verificando el enlace…</p></PantallaAcceso>;
 
+  const nombre = persona.nombreCompleto.split(' ')[0];
+
   return (
-    <PantallaAcceso titulo="Definí tu contraseña">
+    <PantallaAcceso titulo={obra ? 'Creá tu contraseña' : 'Definí tu nueva contraseña'}>
       <form onSubmit={enviar} className="formulario">
         <p className="texto-secundario">
-          Hola, {persona.nombreCompleto}. Vas a ingresar con <strong>{persona.email}</strong>.
+          {obra ? `Hola, ${nombre}. Fuiste invitado a ${obra}.` : `Hola, ${nombre}. Elegí una contraseña nueva para tu cuenta.`}
         </p>
-        <label className="campo">
-          <span>Contraseña nueva</span>
-          <input type="password" value={clave} onChange={(e) => setClave(e.target.value)}
-                 autoComplete="new-password" maxLength={LARGO_MAXIMO * 2} required />
-          <small className={largo > 0 && (largo < LARGO_MINIMO || largo > LARGO_MAXIMO) ? 'texto-error' : 'texto-suave'}>
-            Entre {LARGO_MINIMO} y {LARGO_MAXIMO} caracteres ({largo}). Podés usar una frase que te resulte fácil de recordar.
-          </small>
-        </label>
-        <label className="campo">
-          <span>Repetí la contraseña</span>
-          <input type="password" value={confirmacion} onChange={(e) => setConfirmacion(e.target.value)}
-                 autoComplete="new-password" required />
-        </label>
+        <CampoClave etiqueta="Nueva contraseña" placeholder="Tu contraseña" value={clave}
+                    onChange={(e) => setClave(e.target.value)} autoComplete="new-password" required />
+        <CampoClave etiqueta="Repetir contraseña" placeholder="Repetí tu contraseña" conOjo={false} value={confirmacion}
+                    onChange={(e) => setConfirmacion(e.target.value)} autoComplete="new-password" required />
+        <ul className="lista-requisitos">
+          <Requisito cumplido={largoValido}>Entre {LARGO_MINIMO} y {LARGO_MAXIMO} caracteres</Requisito>
+          <Requisito>No es una contraseña común o filtrada</Requisito>
+          <Requisito cumplido={coinciden}>Las dos contraseñas coinciden</Requisito>
+        </ul>
         {error && <p className="texto-error">{error}</p>}
-        <button type="submit" className="boton boton-primario" disabled={enviando}>
+        <button type="submit" className="boton boton-fuerte" disabled={enviando}>
           {enviando ? 'Guardando…' : 'Guardar contraseña'}
         </button>
       </form>
     </PantallaAcceso>
+  );
+}
+
+function Requisito({ cumplido, children }) {
+  return (
+    <li className={cumplido ? 'requisito-ok' : ''}>
+      <span className="requisito-marca" />
+      <span>{children}</span>
+    </li>
   );
 }

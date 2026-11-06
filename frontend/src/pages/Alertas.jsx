@@ -2,6 +2,7 @@ import { useCallback, useEffect, useState } from 'react';
 import { useParams } from 'react-router-dom';
 import BarraSuperior from '../componentes/BarraSuperior.jsx';
 import DialogoConfirmacion from '../componentes/DialogoConfirmacion.jsx';
+import { IconoEngranaje } from '../componentes/Iconos.jsx';
 import { FilaBarra } from './Comparacion.jsx';
 import { api } from '../api.js';
 import { COLOR_NIVEL, RUBROS, formatearFecha, formatearMonto, formatearPorcentaje } from '../constantes.js';
@@ -48,11 +49,8 @@ export default function Alertas() {
   }
 
   const engranaje = datos?.habilitado && (
-    <button type="button" className="barra-volver" onClick={abrirUmbral} aria-label="Configurar umbral">
-      <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
-        <circle cx="12" cy="12" r="3" />
-        <path d="M19.4 15a1.7 1.7 0 0 0 .3 1.8l.1.1a2 2 0 1 1-2.8 2.8l-.1-.1a1.7 1.7 0 0 0-2.9 1.2V21a2 2 0 1 1-4 0v-.1a1.7 1.7 0 0 0-2.9-1.2l-.1.1a2 2 0 1 1-2.8-2.8l.1-.1a1.7 1.7 0 0 0-1.2-2.9H3a2 2 0 1 1 0-4h.1a1.7 1.7 0 0 0 1.2-2.9l-.1-.1a2 2 0 1 1 2.8-2.8l.1.1a1.7 1.7 0 0 0 1.8.3H9a1.7 1.7 0 0 0 1-1.5V3a2 2 0 1 1 4 0v.1a1.7 1.7 0 0 0 2.9 1.2l.1-.1a2 2 0 1 1 2.8 2.8l-.1.1a1.7 1.7 0 0 0-.3 1.8V9a1.7 1.7 0 0 0 1.5 1H21a2 2 0 1 1 0 4h-.1a1.7 1.7 0 0 0-1.5 1z" />
-      </svg>
+    <button type="button" className="barra-icono" onClick={abrirUmbral} aria-label="Configurar umbral">
+      <IconoEngranaje />
     </button>
   );
 
@@ -72,15 +70,14 @@ export default function Alertas() {
         )}
         {datos?.habilitado && (
           <>
-            <span className="texto-suave">Umbral configurado: {formatearPorcentaje(datos.umbral)}</span>
-            <h2 className="titulo-seccion">
+            <h2 className="titulo-seccion seccion">
               {activas.length === 1 ? '1 alerta activa' : `${activas.length} alertas activas`}
             </h2>
             {activas.length === 0 && <p className="texto-secundario">No hay desvíos para revisar.</p>}
-            <GrupoAlertas titulo="Desvío alto" clase="texto-error" alertas={altas} alResolver={setAResolver} />
-            <GrupoAlertas titulo="Desvío moderado" clase="texto-ambar" alertas={moderadas} alResolver={setAResolver} />
+            <GrupoAlertas titulo="Desvío alto" clase="grupo-rojo" alertas={altas} alResolver={setAResolver} />
+            <GrupoAlertas titulo="Desvío moderado" clase="grupo-ambar" alertas={moderadas} alResolver={setAResolver} />
 
-            {datos.resueltas.length > 0 && <h2 className="titulo-seccion">Resueltas</h2>}
+            {datos.resueltas.length > 0 && <h2 className="titulo-seccion seccion">Resueltas</h2>}
             {datos.resueltas.map((alerta) => (
               <div key={alerta.id} className="tarjeta">
                 <strong>{nombreAlerta(alerta)}</strong>
@@ -136,20 +133,20 @@ function GrupoAlertas({ titulo, clase, alertas, alResolver }) {
   if (alertas.length === 0) return null;
   return (
     <>
-      <strong className={clase}>{titulo}</strong>
+      <h3 className={`grupo-titulo ${clase}`}><span className="marcador" />{titulo}</h3>
       {alertas.map((alerta) => {
         const maximo = Math.max(alerta.presupuestado, alerta.gastoReal);
         return (
           <div key={alerta.id} className="tarjeta">
             <div className="tarjeta-fila">
-              <strong>{nombreAlerta(alerta)}</strong>
+              <span className="tarjeta-titulo">{nombreAlerta(alerta)}</span>
               <strong className={COLOR_NIVEL[alerta.nivel]}>{formatearPorcentaje(alerta.porcentaje, true)}</strong>
             </div>
             <FilaBarra titulo="Presupuestado" monto={alerta.presupuestado} maximo={maximo} />
-            <FilaBarra titulo="Gastado real" monto={alerta.gastoReal} maximo={maximo} nivel={alerta.nivel} />
+            <FilaBarra titulo="Gastado real" monto={alerta.gastoReal} maximo={maximo} nivel={alerta.nivel} destacar />
             <div className="tarjeta-fila">
               <span className="texto-suave">{formatearFecha(alerta.fecha)}</span>
-              <button type="button" className="boton-texto texto-verde" onClick={() => alResolver(alerta)}>Marcar como resuelta</button>
+              <button type="button" className="accion-texto accion-verde" onClick={() => alResolver(alerta)}>Marcar como resuelta</button>
             </div>
           </div>
         );

@@ -22,7 +22,7 @@ export default function DialogoConfirmacion({
         {children}
         <div className="dialogo-acciones">
           <button type="button" className="boton" onClick={alCancelar} autoFocus>Cancelar</button>
-          <button type="button" className="boton boton-primario" onClick={alConfirmar} disabled={enviando || deshabilitado}>
+          <button type="button" className="boton" onClick={alConfirmar} disabled={enviando || deshabilitado}>
             {textoConfirmar}
           </button>
         </div>

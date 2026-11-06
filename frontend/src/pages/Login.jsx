@@ -1,5 +1,6 @@
 import { useState } from 'react';
 import { Link, Navigate, useLocation, useNavigate } from 'react-router-dom';
+import CampoClave from '../componentes/CampoClave.jsx';
 import PantallaAcceso from '../componentes/PantallaAcceso.jsx';
 import { useSesion } from '../sesion/SesionContext.jsx';
 
@@ -29,21 +30,18 @@ export default function Login() {
   }
 
   return (
-    <PantallaAcceso titulo="Iniciar sesión">
+    <PantallaAcceso pie="¿No tenés cuenta? Pedile la invitación al arquitecto de tu obra.">
       <form onSubmit={enviar} className="formulario">
         <label className="campo">
           <span>Correo electrónico</span>
-          <input type="email" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="username" required />
+          <input type="email" placeholder="nombre@correo.com" value={email} onChange={(e) => setEmail(e.target.value)} autoComplete="username" required />
         </label>
-        <label className="campo">
-          <span>Contraseña</span>
-          <input type="password" value={clave} onChange={(e) => setClave(e.target.value)} autoComplete="current-password" required />
-        </label>
+        <CampoClave etiqueta="Contraseña" placeholder="Tu contraseña" value={clave} onChange={(e) => setClave(e.target.value)} autoComplete="current-password" required />
         {error && <p className="texto-error">{error}</p>}
-        <button type="submit" className="boton boton-primario" disabled={enviando}>
-          {enviando ? 'Ingresando…' : 'Ingresar'}
+        <button type="submit" className="boton boton-fuerte" disabled={enviando}>
+          {enviando ? 'Ingresando…' : 'Iniciar sesión'}
         </button>
-        <Link to="/recuperar-clave" className="enlace-secundario">¿Olvidaste tu contraseña?</Link>
+        <Link to="/recuperar-clave" className="enlace-secundario">Olvidé mi contraseña</Link>
       </form>
     </PantallaAcceso>
   );

@@ -1,4 +1,5 @@
 import { useRef, useState } from 'react';
+import CampoMonto from '../CampoMonto.jsx';
 import { RUBROS, fechaDeHoy, formatearMonto } from '../../constantes.js';
 
 const TAMANIO_MAXIMO = 10 * 1024 * 1024;
@@ -68,20 +69,20 @@ export default function FormularioMovimiento({ tipo, rubros, alGuardar, alCancel
       </label>
       <label className="campo">
         <span>Monto</span>
-        <input type="number" min="0.01" step="0.01" value={monto} onChange={(e) => setMonto(e.target.value)} required />
+        <CampoMonto valor={monto} alCambiar={setMonto} required />
       </label>
       <label className="campo">
         <span>Descripción</span>
         <input value={descripcion} maxLength={300} onChange={(e) => setDescripcion(e.target.value)} required />
       </label>
       <label className="campo">
-        <span>Comprobantes (PDF, JPG o PNG, hasta 5 de 10 MB cada uno)</span>
+        <span>{esPago ? 'Recibos' : 'Comprobantes'} (PDF, JPG o PNG, hasta 5 de 10 MB cada uno)</span>
         <input type="file" ref={archivo} accept=".pdf,.jpg,.jpeg,.png" multiple required />
       </label>
       {error && <p className="texto-error">{error}</p>}
       <div className="form-en-linea">
         <button type="button" className="boton" onClick={alCancelar}>Cancelar</button>
-        <button type="submit" className="boton boton-primario" disabled={enviando}>
+        <button type="submit" className="boton boton-fuerte" disabled={enviando}>
           {enviando ? 'Guardando…' : 'Guardar'}
         </button>
       </div>
