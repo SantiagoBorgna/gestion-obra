@@ -7,7 +7,7 @@ import FormularioMovimiento from '../componentes/pagos/FormularioMovimiento.jsx'
 import { api } from '../api.js';
 import { RUBROS, formatearFecha, formatearMes, formatearMonto } from '../constantes.js';
 
-// Pagos del cliente (HU-08, tipo INGRESO) y pagos a colaboradores (HU-09, tipo EGRESO).
+// Cobros al cliente (HU-08, tipo INGRESO) y pagos a colaboradores (HU-09, tipo EGRESO).
 // El backend le manda a cada perfil solo lo que puede ver.
 export default function Movimientos({ tipo }) {
   const { idObra } = useParams();
@@ -59,11 +59,13 @@ export default function Movimientos({ tipo }) {
   const lista = (esCobro ? datos?.cobros : datos?.pagos) ?? [];
   const vigentes = lista.filter((m) => m.estado === 'VIGENTE');
   const total = vigentes.reduce((suma, m) => suma + Number(m.monto), 0);
-  const titulo = esCobro ? 'Pagos del cliente' : esArquitecto ? 'Pagos a colaboradores' : 'Pagos recibidos';
+  const titulosCobro = esArquitecto ? 'Cobros al cliente' : 'Mis pagos';
+  const titulosPago = esArquitecto ? 'Pagos a colaboradores' : 'Pagos recibidos';
+  const titulo = !obra ? '' : esCobro ? titulosCobro : titulosPago;
 
-  // Del mes más viejo al más nuevo, como un historial.
+  // Del movimiento más nuevo al más viejo.
   const porMes = [...lista]
-    .sort((a, b) => a.fecha.localeCompare(b.fecha) || a.id - b.id)
+    .sort((a, b) => b.fecha.localeCompare(a.fecha) || b.id - a.id)
     .reduce((meses, movimiento) => {
       const clave = movimiento.fecha.slice(0, 7);
       const ultimo = meses[meses.length - 1];

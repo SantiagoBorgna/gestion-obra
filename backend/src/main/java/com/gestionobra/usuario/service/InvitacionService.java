@@ -31,6 +31,10 @@ public class InvitacionService {
     public record DatosEnlace(String nombreCompleto, String email) {
     }
 
+    /** Resultado de revisar una contraseña; motivo va vacío si es válida. */
+    public record RevisionClave(boolean valida, String motivo) {
+    }
+
     private static final Duration VIGENCIA_INVITACION = Duration.ofDays(7);
     private static final Duration VIGENCIA_RECUPERACION = Duration.ofMinutes(30);
     private static final String MENSAJE_ENLACE_INVALIDO =
@@ -95,6 +99,18 @@ public class InvitacionService {
     public DatosEnlace consultarEnlace(String token) {
         Usuario usuario = usuarioDelToken(token);
         return new DatosEnlace(usuario.getNombreCompleto(), usuario.getEmail());
+    }
+
+    /** Revisa la contraseña mientras se escribe, sin guardarla. Solo responde a un enlace vigente. */
+    @Transactional(readOnly = true)
+    public RevisionClave revisarClave(String token, String clave) {
+        Usuario usuario = usuarioDelToken(token);
+        try {
+            validador.validar(clave, usuario);
+            return new RevisionClave(true, null);
+        } catch (ErrorNegocio e) {
+            return new RevisionClave(false, e.getMessage());
+        }
     }
 
     @Transactional

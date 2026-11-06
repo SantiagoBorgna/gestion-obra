@@ -6,7 +6,7 @@ import {
   IconoEscalones, IconoLibro, IconoLista, IconoPersonas, IconoRecibo,
 } from '../componentes/Iconos.jsx';
 import { api } from '../api.js';
-import { ESTADOS_OBRA, ESTADOS_PRESUPUESTO, formatearMonto, formatearPorcentaje } from '../constantes.js';
+import { ESTADOS_OBRA, ESTADOS_PRESUPUESTO, agruparPorPersona, formatearMonto } from '../constantes.js';
 import { useSesion } from '../sesion/SesionContext.jsx';
 
 // Inicio de la obra: un menú cuyas opciones dependen del rol. Etapas, Bitácora y Finalizar
@@ -77,7 +77,7 @@ export default function DetalleObra() {
               {esArquitecto && <FilaMenu icono={<IconoEscalones />} titulo="Etapas" />}
               <FilaMenu icono={<IconoLibro />} titulo="Bitácora" />
               {esArquitecto && (
-                <FilaMenu icono={<IconoPersonas />} titulo="Participantes" a={ruta('participantes')} valor={obra.participantes.length} />
+                <FilaMenu icono={<IconoPersonas />} titulo="Participantes" a={ruta('participantes')} valor={agruparPorPersona(obra.participantes).length} />
               )}
             </div>
 
@@ -104,8 +104,7 @@ export default function DetalleObra() {
                   icono={<IconoBarras />}
                   titulo="Presupuesto y gasto"
                   a={aprobado ? ruta('comparacion') : null}
-                  valor={comparacion ? formatearPorcentaje(comparacion.totales.porcentaje, true) : null}
-                  claseValor={comparacion && Number(comparacion.totales.diferencia) > 0 ? 'texto-ambar' : 'texto-verde'}
+                  valor={comparacion ? `${Math.round((comparacion.totales.gastoReal / comparacion.totales.presupuestado) * 100)}% gastado` : null}
                 />
               )}
               {esArquitecto && <FilaMenu icono={<IconoBandera />} titulo="Finalizar obra" />}

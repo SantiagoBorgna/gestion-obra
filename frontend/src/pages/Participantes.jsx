@@ -4,7 +4,7 @@ import BarraSuperior from '../componentes/BarraSuperior.jsx';
 import DialogoConfirmacion from '../componentes/DialogoConfirmacion.jsx';
 import SelectorRubro from '../componentes/SelectorRubro.jsx';
 import { api } from '../api.js';
-import { ROLES, RUBROS } from '../constantes.js';
+import { ROLES, agruparPorPersona } from '../constantes.js';
 
 const PARTICIPANTE_VACIO = { nombreCompleto: '', email: '', rol: 'ESPECIALISTA', rubro: '' };
 const GRUPOS = ['CLIENTE', 'CUADRILLA', 'ESPECIALISTA'];
@@ -48,7 +48,7 @@ export default function Participantes() {
       : `Se agregó a ${participante.nombreCompleto}. Ya tenía cuenta, así que puede ingresar directamente.`);
   }
 
-  const participantes = obra?.participantes ?? [];
+  const personas = agruparPorPersona(obra?.participantes ?? []);
 
   return (
     <div className="pantalla">
@@ -65,19 +65,20 @@ export default function Participantes() {
         {agregando && (
           <FormularioParticipante idObra={idObra} alAgregar={agregado} alCancelar={() => setAgregando(false)} />
         )}
-        {obra && (
+        {obra && !obra.esArquitecto && <p className="texto-error">Solo el arquitecto de la obra puede hacer esto.</p>}
+        {obra?.esArquitecto && (
           <h2 className="titulo-seccion seccion">
-            {participantes.length === 1 ? '1 participante' : `${participantes.length} participantes`}
+            {personas.length === 1 ? '1 participante' : `${personas.length} participantes`}
           </h2>
         )}
         {GRUPOS.map((rol) => {
-          const delGrupo = participantes.filter((p) => p.rol === rol);
+          const delGrupo = personas.filter((p) => p.rol === rol);
           if (delGrupo.length === 0) return null;
           return (
             <section key={rol} className="seccion">
               <h3 className="grupo-titulo"><span className="marcador" />{ROLES[rol]}</h3>
               {delGrupo.map((p) => (
-                <div key={`${p.id}-${p.rubro}`} className="tarjeta">
+                <div key={p.id} className="tarjeta">
                   <div className="tarjeta-fila">
                     <span className="tarjeta-titulo">{p.nombreCompleto}</span>
                     <span className={`fila-participante-estado ${p.invitacionPendiente ? 'texto-ambar' : 'texto-verde'}`}>
@@ -85,7 +86,7 @@ export default function Participantes() {
                     </span>
                   </div>
                   <div className="etapa-participante">
-                    <span>{[RUBROS[p.rubro], p.email].filter(Boolean).join(' · ')}</span>
+                    <span>{[...p.rubros, p.email].join(' · ')}</span>
                     {p.invitacionPendiente && (
                       <button type="button" className="enlace" onClick={() => setAReenviar(p)}>Reenviar</button>
                     )}
@@ -150,7 +151,7 @@ function FormularioParticipante({ idObra, alAgregar, alCancelar }) {
       {error && <p className="texto-error">{error}</p>}
       <div className="form-en-linea">
         <button type="button" className="boton" onClick={alCancelar}>Cancelar</button>
-        <button type="submit" className="boton boton-fuerte" disabled={enviando}>{enviando ? 'Agregando…' : 'Agregar'}</button>
+        <button type="submit" className="boton boton-fuerte boton-positivo" disabled={enviando}>{enviando ? 'Agregando…' : 'Agregar'}</button>
       </div>
     </form>
   );

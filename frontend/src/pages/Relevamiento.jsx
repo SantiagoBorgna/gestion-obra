@@ -110,7 +110,7 @@ export default function Relevamiento() {
             <SelectorRubro valor={nueva.rubro} alCambiar={(rubro) => setNueva({ ...nueva, rubro })} />
             <div className="form-en-linea">
               <button type="button" className="boton" onClick={() => setNueva(null)}>Cerrar</button>
-              <button type="submit" className="boton boton-fuerte" disabled={enviando}>Agregar</button>
+              <button type="submit" className="boton boton-fuerte boton-positivo" disabled={enviando}>Agregar</button>
             </div>
           </form>
         )}
@@ -137,7 +137,7 @@ export default function Relevamiento() {
                     <SelectorRubro valor={editando.rubro} alCambiar={(valor) => setEditando({ ...editando, rubro: valor })} />
                     <div className="form-en-linea">
                       <button type="button" className="boton" onClick={() => setEditando(null)}>Cancelar</button>
-                      <button type="submit" className="boton boton-fuerte">Guardar</button>
+                      <button type="submit" className="boton boton-fuerte boton-positivo">Guardar</button>
                     </div>
                     <button type="button" className="enlace enlace-eliminar" onClick={eliminar}>Eliminar tarea</button>
                   </form>

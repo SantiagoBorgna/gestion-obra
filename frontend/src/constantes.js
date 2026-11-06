@@ -42,6 +42,16 @@ export const ESTADOS_ITEM = {
   CONFIRMADO: 'Confirmado',
 };
 
+/** Une las filas de un mismo participante, que el backend manda una por rubro. */
+export function agruparPorPersona(participantes) {
+  const personas = new Map();
+  participantes.forEach((p) => {
+    if (!personas.has(p.id)) personas.set(p.id, { ...p, rubros: [] });
+    if (p.rubro) personas.get(p.id).rubros.push(RUBROS[p.rubro]);
+  });
+  return [...personas.values()];
+}
+
 /** "$8.000.000", con centavos solo cuando los tiene ("$1.270.000,50"). */
 export function formatearMonto(monto) {
   if (monto === null || monto === undefined) return '-';

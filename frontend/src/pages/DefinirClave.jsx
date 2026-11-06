@@ -6,6 +6,7 @@ import { api } from '../api.js';
 
 const LARGO_MINIMO = 15;
 const LARGO_MAXIMO = 64;
+const ESPERA_REVISION = 400;
 
 // Pantalla a la que llevan los enlaces de invitación y de recuperación de contraseña.
 export default function DefinirClave() {
@@ -16,6 +17,7 @@ export default function DefinirClave() {
   const [errorEnlace, setErrorEnlace] = useState('');
   const [clave, setClave] = useState('');
   const [confirmacion, setConfirmacion] = useState('');
+  const [revision, setRevision] = useState(null);
   const [error, setError] = useState('');
   const [enviando, setEnviando] = useState(false);
   const [listo, setListo] = useState(false);
@@ -34,13 +36,25 @@ export default function DefinirClave() {
   const largoValido = largo >= LARGO_MINIMO && largo <= LARGO_MAXIMO;
   const coinciden = clave !== '' && clave === confirmacion;
 
+  // Con el largo correcto, le pregunta al servidor si la contraseña se puede usar, cuando se deja de escribir.
+  useEffect(() => {
+    setRevision(null);
+    if (!largoValido) return undefined;
+    let vigente = true;
+    const espera = setTimeout(() => {
+      api(`/invitaciones/${encodeURIComponent(token)}/revisar-clave`, { metodo: 'POST', datos: { clave } })
+        .then((resultado) => { if (vigente) setRevision(resultado); })
+        .catch((e) => { if (vigente) setRevision({ valida: false, motivo: e.message }); });
+    }, ESPERA_REVISION);
+    return () => {
+      vigente = false;
+      clearTimeout(espera);
+    };
+  }, [clave, largoValido, token]);
+
   async function enviar(evento) {
     evento.preventDefault();
     setError('');
-    if (!coinciden) {
-      setError('Las contraseñas no coinciden.');
-      return;
-    }
     setEnviando(true);
     try {
       await api(`/invitaciones/${encodeURIComponent(token)}`, { metodo: 'POST', datos: { clave } });
@@ -86,11 +100,13 @@ export default function DefinirClave() {
                     onChange={(e) => setConfirmacion(e.target.value)} autoComplete="new-password" required />
         <ul className="lista-requisitos">
           <Requisito cumplido={largoValido}>Entre {LARGO_MINIMO} y {LARGO_MAXIMO} caracteres</Requisito>
-          <Requisito>No es una contraseña común o filtrada</Requisito>
+          <Requisito cumplido={revision?.valida} rechazado={revision && !revision.valida}>
+            {revision?.motivo ?? 'No es una contraseña común o filtrada'}
+          </Requisito>
           <Requisito cumplido={coinciden}>Las dos contraseñas coinciden</Requisito>
         </ul>
         {error && <p className="texto-error">{error}</p>}
-        <button type="submit" className="boton boton-fuerte" disabled={enviando}>
+        <button type="submit" className="boton boton-fuerte" disabled={enviando || !largoValido || !revision?.valida || !coinciden}>
           {enviando ? 'Guardando…' : 'Guardar contraseña'}
         </button>
       </form>
@@ -98,9 +114,9 @@ export default function DefinirClave() {
   );
 }
 
-function Requisito({ cumplido, children }) {
+function Requisito({ cumplido, rechazado, children }) {
   return (
-    <li className={cumplido ? 'requisito-ok' : ''}>
+    <li className={cumplido ? 'requisito-ok' : rechazado ? 'requisito-rechazado' : ''}>
       <span className="requisito-marca" />
       <span>{children}</span>
     </li>

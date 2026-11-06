@@ -32,6 +32,12 @@ public class InvitacionController {
         return invitaciones.consultarEnlace(token);
     }
 
+    @PostMapping("/{token}/revisar-clave")
+    public InvitacionService.RevisionClave revisarClave(@PathVariable String token,
+                                                        @Valid @RequestBody DefinirClaveRequest datos) {
+        return invitaciones.revisarClave(token, datos.clave());
+    }
+
     @PostMapping("/{token}")
     public ResponseEntity<Void> definirClave(@PathVariable String token,
                                              @Valid @RequestBody DefinirClaveRequest datos) {

@@ -11,10 +11,11 @@ export default function VistaColaborador({ idObra, presupuesto, tareas, alCambia
     <>
       <h1 className="titulo-pantalla">Estimación de costos</h1>
       {presupuesto.items.length === 0 && <p className="texto-secundario">Esta obra no tiene tareas de tus rubros.</p>}
-      {presupuesto.items.map((item) => {
+      {presupuesto.items.map((item, indice) => {
         const delRubro = tareas.filter((t) => t.rubro === item.rubro);
+        const esUltimo = indice === presupuesto.items.length - 1;
         return (
-          <section key={item.id} className="seccion">
+          <section key={item.id} className={`seccion ${esUltimo ? 'seccion-al-pie' : ''}`}>
             <h2 className="titulo-seccion">
               {RUBROS[item.rubro]} · {delRubro.length === 1 ? '1 tarea' : `${delRubro.length} tareas`}
             </h2>

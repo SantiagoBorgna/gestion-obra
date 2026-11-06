@@ -114,6 +114,8 @@ button { font: inherit; }
 }
 .requisito-ok .requisito-marca { border-color: var(--verde); background: var(--verde); }
 .requisito-ok { color: var(--verde); }
+.requisito-rechazado .requisito-marca { border-color: var(--rojo); background: var(--rojo); }
+.requisito-rechazado { color: var(--rojo); }
 
 /* Barra superior */
 .pantalla { min-height: 100vh; display: flex; flex-direction: column; }
@@ -198,6 +200,8 @@ button { font: inherit; }
 .cabecera-pantalla { display: flex; justify-content: space-between; align-items: center; gap: 12px; }
 .seccion { display: flex; flex-direction: column; gap: 10px; margin-top: 8px; }
 .pie-pantalla { margin-top: auto; padding-top: 20px; display: flex; flex-direction: column; gap: 10px; }
+.seccion-al-pie, .seccion-al-pie .formulario { flex: 1; }
+.pie-estimacion { padding-top: 14px; border-top: 1px solid var(--borde); }
 
 /* Tarjetas */
 .tarjeta {
@@ -346,6 +350,15 @@ button { font: inherit; }
 .campo input::placeholder, .campo textarea::placeholder { color: #b0aca4; }
 .campo textarea { resize: vertical; }
 .campo input:focus, .campo select:focus, .campo textarea:focus { outline: none; border-color: var(--marron); }
+.campo input::-ms-reveal, .campo input::-ms-clear { display: none; }
+.campo input.oculto-visual { position: absolute; width: 1px; height: 1px; padding: 0; border: 0; opacity: 0; }
+.campo input.oculto-visual:focus + .boton { outline: 2px solid var(--marron); outline-offset: 2px; }
+.campo .boton-adjuntar { align-self: flex-start; }
+.archivos-elegidos { display: flex; flex-direction: column; margin: 0; padding: 0; list-style: none; }
+.archivo-elegido { display: flex; justify-content: space-between; align-items: center; gap: 10px; padding: 8px 0; border-bottom: 1px solid var(--borde); }
+.archivo-elegido > span:first-child { min-width: 0; overflow-wrap: anywhere; }
+.archivo-peso { margin-left: 6px; color: var(--texto-suave); white-space: nowrap; }
+.archivo-pesado, .archivo-pesado .archivo-peso { color: var(--rojo); }
 .campo-con-icono { position: relative; }
 .campo-con-icono input { padding-right: 42px; }
 .campo-icono {
@@ -371,6 +384,7 @@ button { font: inherit; }
 }
 .boton:disabled { background: var(--beige-suave); border-color: var(--beige-suave); color: #aaa69d; cursor: default; }
 .boton-fuerte { font-weight: bold; }
+.boton-positivo { background: var(--marron); color: var(--blanco); }
 .boton-chico { flex-shrink: 0; padding: 7px 13px; font-size: 15px; border-radius: 9px; }
 .boton-peligro { border-color: var(--rojo); color: var(--rojo); }
 .boton-verde { border-color: var(--verde); color: var(--verde); }

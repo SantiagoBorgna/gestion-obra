@@ -106,7 +106,9 @@ export default function VistaArquitecto({ idObra, presupuesto, tareas, alCambiar
         {(estado === 'CONSOLIDADO' || estado === 'RECHAZADO') && (
           <button type="button" className="boton" disabled={enviando} onClick={() => ejecutar('/volver-a-estimacion')}>Volver a estimación</button>
         )}
-        {estado === 'PRESENTADO' && <p className="aviso">Presentado el {formatearFecha(presupuesto.fechaPresentacion)}. Esperando la respuesta del cliente.</p>}
+        {estado === 'PRESENTADO' && (
+          <p className="aviso">Presentado el {formatearFecha(presupuesto.fechaPresentacion)}<br />Esperando respuesta del cliente</p>
+        )}
         {estado === 'APROBADO' && <p className="aviso">Aprobado por el cliente el {formatearFecha(presupuesto.fechaAprobacion)}.</p>}
       </div>
     </>
@@ -151,7 +153,7 @@ function FilaHonorarios({ item, editable, enviando, alGuardar }) {
           </label>
           <div className="form-en-linea">
             <button type="button" className="boton" onClick={() => setEditando(false)}>Cancelar</button>
-            <button type="submit" className="boton boton-fuerte" disabled={enviando}>Guardar</button>
+            <button type="submit" className="boton boton-fuerte boton-positivo" disabled={enviando}>Guardar</button>
           </div>
         </form>
       )}

@@ -23,14 +23,13 @@ import com.gestionobra.usuario.service.UsuarioSesion;
 @Service
 public class ObraService {
 
-    /** El cliente va vacío para el colaborador, que no ve datos del cliente. */
+    /** El nombre del cliente solo le llega al arquitecto. */
     public record ObraResumen(Long id, String titulo, String ubicacion, LocalDate fechaInicio, EstadoObra estado,
                               String cliente) {
 
         static ObraResumen de(Obra obra, Long idUsuario) {
-            boolean veCliente = obra.esArquitecto(idUsuario) || obra.esCliente(idUsuario);
             return new ObraResumen(obra.getId(), obra.getTitulo(), obra.getUbicacion(), obra.getFechaInicio(),
-                obra.getEstado(), veCliente ? obra.getCliente().getNombreCompleto() : null);
+                obra.getEstado(), obra.esArquitecto(idUsuario) ? obra.getCliente().getNombreCompleto() : null);
         }
     }
 
@@ -103,12 +102,11 @@ public class ObraService {
     }
 
     private ObraDetalle detalle(Obra obra, UsuarioSesion sesion) {
-        // El colaborador no ve datos del cliente.
-        boolean veCliente = obra.esArquitecto(sesion.id()) || obra.esCliente(sesion.id());
+        boolean esArquitecto = obra.esArquitecto(sesion.id());
         return new ObraDetalle(obra.getId(), obra.getTitulo(), obra.getDescripcion(), obra.getUbicacion(),
             obra.getFechaInicio(), obra.getFechaFin(), obra.getEstado(), obra.getArquitecto().getNombreCompleto(),
-            veCliente ? obra.getCliente().getNombreCompleto() : null,
-            obra.esArquitecto(sesion.id()), participantesVisibles(obra, sesion.id()));
+            esArquitecto ? obra.getCliente().getNombreCompleto() : null,
+            esArquitecto, participantesVisibles(obra, sesion.id()));
     }
 
     /** Solo el arquitecto ve a los participantes. Hay una fila por rubro, aunque sea la misma persona. */

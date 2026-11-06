@@ -1,9 +1,16 @@
-import { useRef, useState } from 'react';
+import { useState } from 'react';
 import CampoMonto from '../CampoMonto.jsx';
 import { RUBROS, fechaDeHoy, formatearMonto } from '../../constantes.js';
 
 const TAMANIO_MAXIMO = 10 * 1024 * 1024;
 const CANTIDAD_MAXIMA = 5;
+
+const claveArchivo = (archivo) => `${archivo.name}-${archivo.size}-${archivo.lastModified}`;
+
+function formatearPeso(bytes) {
+  if (bytes < 1024 * 1024) return `${Math.max(1, Math.round(bytes / 1024))} KB`;
+  return `${(bytes / (1024 * 1024)).toFixed(1).replace('.', ',')} MB`;
+}
 
 // Alta de un cobro (INGRESO) o de un pago a un colaborador (EGRESO), con comprobante obligatorio.
 export default function FormularioMovimiento({ tipo, rubros, alGuardar, alCancelar }) {
@@ -12,22 +19,33 @@ export default function FormularioMovimiento({ tipo, rubros, alGuardar, alCancel
   const [fecha, setFecha] = useState(fechaDeHoy());
   const [monto, setMonto] = useState('');
   const [descripcion, setDescripcion] = useState('');
+  const [archivos, setArchivos] = useState([]);
   const [error, setError] = useState('');
   const [enviando, setEnviando] = useState(false);
-  const archivo = useRef(null);
 
   const rubro = rubros.find((r) => String(r.idItem) === idItem);
+  const sobrantes = Math.max(0, archivos.length - CANTIDAD_MAXIMA);
+  const hayPesados = archivos.some((archivo) => archivo.size > TAMANIO_MAXIMO);
+
+  // Los archivos elegidos se suman a los anteriores. Se limpia el selector para poder volver a elegir uno que se quitó.
+  function elegirArchivos(evento) {
+    const elegidos = new Map(archivos.map((archivo) => [claveArchivo(archivo), archivo]));
+    [...evento.target.files].forEach((archivo) => elegidos.set(claveArchivo(archivo), archivo));
+    setArchivos([...elegidos.values()]);
+    setError('');
+    evento.target.value = '';
+  }
+
+  function quitarArchivo(clave) {
+    setArchivos(archivos.filter((archivo) => claveArchivo(archivo) !== clave));
+    setError('');
+  }
 
   async function enviar(evento) {
     evento.preventDefault();
     setError('');
-    const comprobantes = [...archivo.current.files];
-    if (comprobantes.length > CANTIDAD_MAXIMA) {
-      setError(`Podés adjuntar hasta ${CANTIDAD_MAXIMA} comprobantes.`);
-      return;
-    }
-    if (comprobantes.some((comprobante) => comprobante.size > TAMANIO_MAXIMO)) {
-      setError('Cada comprobante puede pesar como máximo 10 MB.');
+    if (archivos.length === 0) {
+      setError(`Adjuntá al menos ${esPago ? 'un recibo' : 'un comprobante'}.`);
       return;
     }
     const datos = new FormData();
@@ -36,7 +54,7 @@ export default function FormularioMovimiento({ tipo, rubros, alGuardar, alCancel
     datos.append('fecha', fecha);
     datos.append('monto', monto);
     datos.append('descripcion', descripcion);
-    comprobantes.forEach((comprobante) => datos.append('archivos', comprobante));
+    archivos.forEach((archivo) => datos.append('archivos', archivo));
 
     setEnviando(true);
     try {
@@ -75,14 +93,27 @@ export default function FormularioMovimiento({ tipo, rubros, alGuardar, alCancel
         <span>Descripción</span>
         <input value={descripcion} maxLength={300} onChange={(e) => setDescripcion(e.target.value)} required />
       </label>
-      <label className="campo">
-        <span>{esPago ? 'Recibos' : 'Comprobantes'} (PDF, JPG o PNG, hasta 5 de 10 MB cada uno)</span>
-        <input type="file" ref={archivo} accept=".pdf,.jpg,.jpeg,.png" multiple required />
-      </label>
+      <div className="campo">
+        <span>{esPago ? 'Recibos' : 'Comprobantes'} (PDF, JPG o PNG, hasta {CANTIDAD_MAXIMA} de 10 MB cada uno)</span>
+        <input id="archivos-movimiento" type="file" className="oculto-visual" accept=".pdf,.jpg,.jpeg,.png" multiple onChange={elegirArchivos} />
+        <label htmlFor="archivos-movimiento" className="boton boton-chico boton-adjuntar">+ Adjuntar archivos</label>
+        {archivos.length > 0 && (
+          <ul className="archivos-elegidos">
+            {archivos.map((archivo) => (
+              <li key={claveArchivo(archivo)} className={`archivo-elegido ${archivo.size > TAMANIO_MAXIMO ? 'archivo-pesado' : ''}`}>
+                <span>{archivo.name}<span className="archivo-peso">{formatearPeso(archivo.size)}</span></span>
+                <button type="button" className="boton-icono" onClick={() => quitarArchivo(claveArchivo(archivo))} aria-label={`Quitar ${archivo.name}`}>✕</button>
+              </li>
+            ))}
+          </ul>
+        )}
+        {sobrantes > 0 && <p className="texto-error">Podés adjuntar hasta {CANTIDAD_MAXIMA}: quitá {sobrantes}.</p>}
+        {hayPesados && <p className="texto-error">Cada archivo puede pesar como máximo 10 MB: quitá los marcados en rojo.</p>}
+      </div>
       {error && <p className="texto-error">{error}</p>}
       <div className="form-en-linea">
         <button type="button" className="boton" onClick={alCancelar}>Cancelar</button>
-        <button type="submit" className="boton boton-fuerte" disabled={enviando}>
+        <button type="submit" className="boton boton-fuerte boton-positivo" disabled={enviando || sobrantes > 0 || hayPesados}>
           {enviando ? 'Guardando…' : 'Guardar'}
         </button>
       </div>
