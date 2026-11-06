@@ -2,7 +2,7 @@
 
 export const RUBROS = {
   MOVIMIENTO_DE_SUELOS: 'Movimiento de suelos',
-  FUNDACIONES: 'Fundaciones',
+  FUNDACIONES: 'Cimientos',
   ESTRUCTURAS: 'Estructuras',
   MAMPOSTERIA: 'Mampostería',
   TECHOS_Y_CUBIERTAS: 'Techos y cubiertas',
